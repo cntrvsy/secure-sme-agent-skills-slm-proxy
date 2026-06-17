@@ -36,14 +36,7 @@
   // Must show main features of each chapter including conclusions.
   // Must NOT refer to anything not mentioned in the dissertation.
   abstract: [
-    This dissertation investigates the application of formal logic to
-    data-driven analysis within information systems. The study reviews
-    existing approaches, develops a novel framework, and evaluates its
-    effectiveness through a series of controlled experiments. Results
-    indicate a statistically significant improvement in analytical
-    accuracy when the proposed method is applied. Conclusions identify
-    both the practical benefits and the limitations of the framework,
-    and suggest directions for future research.
+    Insert Here........
   ],
 
   // Acknowledgements: optional — delete this argument to omit the page (§3.4.3)
@@ -70,11 +63,11 @@
 = Introduction
 
 == Overview and Background
-Small and medium-sized enterprises (SMEs) function as the backbone of the global economy, representing approximately 90% of all businesses and providing over 50% of employment worldwide @sanchez2025artificial. To remain competitive in an increasingly digital marketplace, these organizations urgently need to adopt Artificial Intelligence (AI) to automate routine tasks, streamline workflows, and enhance operational productivity @ode2026ai. However, SMEs frequently encounter an "Operational Paradox": they desperately need automation to scale, but lack the vast financial resources, specialized IT infrastructure, and technical personnel required to run or manage massive, general-purpose AI models @sanchez2025artificial.
+Approximately 90% of all businesses and more than 50% of all jobs globally are small and medium-sized firms (SMEs), which serve as the foundation of the global economy @sanchez2025artificial. These businesses urgently need to implement Artificial Intelligence (AI) to automate repetitive operations, optimise workflows, and boost operational productivity in order to stay competitive in an increasingly digital economy @ode2026ai. However, SMEs often face a "Operational Paradox": they lack the substantial financial resources, specialised IT infrastructure, and technical staff needed to run or administer big, general-purpose AI models @sanchez2025artificial, despite their dire need for automation to grow.
 
-Recently, AI has evolved from passive conversational chatbots into autonomous "agents" capable of interacting with external systems and environments @zhan2024injecagent. To standardize how AI accesses external tools, the Model Context Protocol (MCP) was introduced, acting as a universal "USB-C port" for AI applications @whittaker2026mcp. While large technology companies are equipped to handle complex MCP server infrastructure, SMEs are increasingly relying on a lightweight alternative known as *Agent Skills* @whittaker2026mcp. Agent Skills are standardized, version-controlled directories—anchored by a `SKILL.md` file—that provide the AI with reusable procedural knowledge and instructions @agentskills2026overview. Agents load these skills through "progressive disclosure", reading only basic metadata initially and expanding the full instructions into their context window only when actively required by the task @agentskills2026overview.
+AI has recently progressed beyond passive conversational chatbots to self-governing "agents" that can communicate with external surroundings and systems @zhan2024injecagent. The Model Context Protocol (MCP), which serves as a global "USB-C port" for AI applications, was developed to standardise how AI accesses external tools @whittaker2026mcp. SMEs are increasingly depending on a lightweight substitute called *Agent Skills* @whittaker2026mcp, whereas big IT firms are capable of managing complicated MCP server infrastructure. The AI receives reusable procedural knowledge and commands via Agent Skills, which are standardised, version-controlled directories anchored by a `SKILL.md` file @agentskills2026overview. Agents load these skills using "progressive disclosure," reading only the most basic metadata at first and only expanding the entire instructions into their context window when the task @agentskills2026overview specifically requests it.
 
-Despite their immense utility, Agent Skills introduce two critical structural challenges for SMEs. First, they create severe vulnerabilities to *Indirect Prompt Injection (IPI) attacks* @gulyamov2026prompt. Attackers can conceal malicious commands within the Markdown body or YAML frontmatter of a `SKILL.md` file, using tactics like hidden Unicode tags or out-of-scope parameters to trick the AI into executing unauthorized actions, such as exfiltrating private data @zhang2025msb. Second, the unstructured and verbose nature of custom SME instructions worsens the "Context Tax"—a computational burden where bloated contextual history causes the model to consume massive amounts of costly tokens without improving task performance @fraser2025cutting.
+Agent skills present two significant structural hurdles for SMEs, notwithstanding their enormous utility. Initially, they make it extremely vulnerable to *Indirect Prompt Injection (IPI) attacks* @gulyamov2026prompt. In order to deceive the AI into carrying out unauthorised operations, such as exfiltrating private data @zhang2025msb, attackers can include malicious commands within the Markdown body or YAML frontmatter of a `SKILL.md` file using strategies like hidden Unicode tags or out-of-scope parameters. Second, the "Context Tax": a computational penalty where inflated contextual history causes the model to consume enormous amounts of expensive tokens without enhancing task performance @fraser2025cutting. This is exacerbated by the unstructured and verbose nature of custom SME instructions.
 
 == Aims and Objectives
 *The primary aim of this research is to design, construct, and evaluate a fine-tuned Small Language Model (SLM) proxy that secures SME workflows by auditing and compressing `SKILL.md` files, protecting them against Indirect Prompt Injections (IPIs) and mitigating the "Context Tax."*
@@ -87,7 +80,7 @@ To achieve this overarching aim, the following objectives have been established:
 == Approach Used
 This dissertation adopts a *Design Science Research (DSR)* methodology, which focuses on constructing and rigorously evaluating a functional artifact to solve a practical, real-world problem @zupan2025developing. The core artifact is a secure middleware proxy powered by Google DeepMind's *Gemma 4 E2B*, a 9-billion parameter Small Language Model optimized for tool use and long-context workflows @unsloth2026gemma4.
 
-The approach utilizes Parameter-Efficient Fine-Tuning (PEFT) via LoRA within the Unsloth framework. This method ensures the deployed model can be quantized to 4-bit precision, allowing it to run locally on standard consumer hardware with just 5GB of RAM—directly aligning with SME hardware constraints @unsloth2026gemma4. The proxy is trained to perform two automated passes on custom `SKILL.md` files before they reach downstream operational AI agents: Pass A to flag and neutralize IPI attacks @zhang2025msb, and Pass B to actively compress verbose metadata to eliminate context bloat @fraser2025cutting.
+The approach utilizes Parameter-Efficient Fine-Tuning (PEFT) via LoRA within the Unsloth framework. This method ensures the deployed model can be quantized to 4-bit precision, allowing it to run locally on standard consumer hardware with just 5GB of RAM: directly aligning with SME hardware constraints @unsloth2026gemma4. The proxy is trained to perform two automated passes on custom `SKILL.md` files before they reach downstream operational AI agents: Pass A to flag and neutralize IPI attacks @zhang2025msb, and Pass B to actively compress verbose metadata to eliminate context bloat @fraser2025cutting.
 
 == Assumptions
 This research is based on several foundational assumptions:
