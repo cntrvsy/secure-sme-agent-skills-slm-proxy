@@ -110,20 +110,16 @@ The remainder of this dissertation is organized as follows:
 // Begin with a brief introduction; end with a brief summary. (§3.2.2)
 // ════════════════════════════════════════════════════════════════════════════
 = Literature Review
+This chapter critically examines the current literature surrounding the operationalisation, security, and optimisation of artificial intelligence within Small and Medium-sized Enterprises (SMEs). Before delving into the architectural transition from monolithic Large Language Models (LLMs) to tool-integrated Agentic AI via the Model background Protocol (MCP) and Agent Skills, the broader background of the SME "Operational Paradox" is established. The article then assesses the growing body of research on the use of optimised Small Language Models (SLMs) as effective, secure middleware solutions and critically examines the serious security flaws brought about by these architectures, including Indirect Prompt Injections (IPIs).
 
-This chapter establishes the theoretical context of the research. Section 2.1
-provides an overview of formal logic. Section 2.2 examines propositional logic
-in detail, including its principal connectives. Section 2.3 considers predicate
-logic and its role in analytical frameworks.
+== The SME Operational Paradox and Digital Adoption
+Approximately 90% of all businesses and more than 50% of all jobs globally are small and medium-sized firms (SMEs), which form the foundation of the global economy @sanchez2025artificial. SMEs are realising that artificial intelligence (AI) is a strategic necessity to boost automation, improve operational efficiency, and spur growth in order to stay competitive in an increasingly digital environment. This quick adoption is supported by recent empirical data; according to a 2026 report on UK businesses, 35% of SMEs are currently actively adopting AI technology—a significant increase from the previous year—mainly to expedite daily operations, carry out research, and manage administrative duties @lewis2026uk. Similarly, regional research shows that 65% of SMEs use AI for data analysis and content production @ode2026ai.
 
-== Overview of Formal Logic
+Nevertheless, significant systemic weaknesses are hidden by these surface-level adoption measurements. SMEs are aggressively experimenting with AI, but they are unable to operationalise the technology to produce revolutionary outcomes due to significant structural constraints. According to empirical data, substantial knowledge gaps, which were mentioned by 77% of SME respondents, as well as severe time, resource, and financial constraints, are the main barriers to deep AI integration @ode2026ai. Additionally, SMEs often have dispersed data silos, disjointed legacy systems, and lax security and identity restrictions, all of which make it extremely difficult to deploy autonomous AI in a safe and dependable manner @lewis2026uk.
 
-Formal logic provides a rigorous framework for expressing and evaluating
-arguments. The two principal branches relevant to this study are propositional
-logic (see Section 2.2) and predicate logic (see Section 2.3). According to
-@sanchez2025artificial, formal methods have been applied to software analysis
-since the early 1970s. More recently, their application has extended to
-information retrieval and data analysis @ode2026ai.
+The "Operational Paradox" @sanchez2025artificial is the result of these compounding limitations. On the one hand, in order to overcome resource constraints, scale operations, and endure in a market that is changing quickly, SMEs desperately need AI-driven automation. However, they inherently lack the funding, sophisticated technology infrastructure, and skilled workers needed to securely host, deploy, or secure large AI models @sanchez2025artificial. Because SMEs have smaller profit margins and less absorptive capacity than major multinational corporations, the high upfront costs and intricate upkeep of reliable AI systems are both technically and financially prohibitive @sanchez2025artificial.
+
+As a result, SMEs and larger tech-enabled businesses are seeing a growing digital divide @lewis2026uk. Many SMEs are left depending on disjointed, superficial tools that are unable to connect with one another, whereas highly resourced corporations are completely redesigning their operational models with secure, integrated AI architectures that save entire weeks of manual effort @lewis2026uk. SMEs are at a serious, compounding competitive disadvantage in the digital economy because of this operational imbalance, which frequently results in their just cutting minutes off peripheral activities @lewis2026uk.
 
 // CITATION GUIDE (§3.3.2) — Harvard system used exclusively:
 //   Both names not in sentence:   (Surname Year)       e.g. (Knuth 1969)
@@ -131,11 +127,13 @@ information retrieval and data analysis @ode2026ai.
 //   Three or more authors:         (Smith et al. Year)  e.g. (Smith et al. 2010)
 //   Same applies to editors.
 
-== Propositional Logic
+== The Evolution of Agentic AI: MCP vs. Agent Skills
+The methods by which these agents interact with the outside world have emerged as a key area of industry development as AI progresses from passive conversational models to autonomous systems. The Model Context Protocol (MCP) was developed to standardise how AI agents find and engage with external data sources which include traditional relational databases, APIs, and other tools. MCP functions as a universal integration layer that standardises how models retrieve real-time data from external APIs; it is commonly referred to as the "USB-C for AI" @raghunathan2025agents, @clyburn2026mcp. MCP essentially gives the agent the "what", meaning the external interfaces and raw data required to complete a task @raghunathan2025agents. However, this architecture is too complicated and resource-intensive for typical SMEs because it requires specialised technical infrastructure and IT staff to configure, securely authenticate, and maintain operational MCP servers.
 
-Propositional logic deals with statements that are either true or false. It
-has been applied extensively to database query optimisation @raghunathan2025agents.
-The standard connectives are summarised in @tbl-connectives.
+As a result, SMEs are embracing Agent Skills, a lighter and more accessible option. Agent Skills give the "HOW" if MCP specifies the "WHAT" by encoding reusable procedural knowledge, formatting standards, and domain expertise @raghunathan2025agents. The core SKILL.md file @agentskills2026overview serves as the foundation for an Agent Skill, which is a portable, version-controlled directory. These files use a Markdown body to give the LLM clear, detailed processes and operational limitations @agentskills2026overview, @whittaker2026mcp, combined with organised YAML frontmatter to define crucial metadata (such the skill's name and a brief description).
+Giving LLMs access to outside resources greatly improves their capabilities, but it also causes considerable computing inefficiencies. This problem is critically examined by @fraser2025cutting, who show that feeding models bloated, unstructured tool descriptions causes context windows to rapidly widen. In addition to increasing costly API token use, this phenomenon—known as the "Context Tax", decreases downstream model performance since the AI finds it difficult to separate essential instructions from the noise @fraser2025cutting.
+
+Agent Skills uses "progressive disclosure" @agentskills2026overview, an active context management technique, to address the Context Tax. Progressive disclosure guarantees that the agent loads only the minimal YAML metadata (roughly 20 to 50 tokens) during the discovery phase, as opposed to loading massive, monolithic tool definitions upfront, which can easily consume tens of thousands of tokens and instantly exhaust a model's memory @whittaker2026mcp. Only when a particular task actively activates the skill @agentskills2026overview, @whittaker2026mcp will the complete, verbose Markdown instructions be dynamically brought into the agent's context window. Agent Skills is computationally and fiscally feasible for SMEs thanks to its simplified architecture, but when those dynamically loaded files are altered, it immediately creates special security risks.
 
 // FIGURE/TABLE RULES (§3.3.5 / §3.5.7):
 //   - Label format: Figure C.N  /  Table C.N  (C = chapter, N = index)
@@ -147,47 +145,74 @@ The standard connectives are summarised in @tbl-connectives.
 
 #figure(
   table(
-    columns: 3,
+    columns: (1.2fr, 2fr, 2fr),
     stroke: 0.5pt,
-    [*Connective*], [*Symbol*], [*Meaning*],
-    [Conjunction], [$and$], [Both P and Q are true],
-    [Disjunction], [$or$], [At least one of P or Q is true],
-    [Negation], [$not$], [P is false],
-    [Implication], [$=>$], [If P is true then Q is true],
-    [Biconditional], [$<=>$], [P is true if and only if Q is true],
+    align: left,
+    [*Feature / Dimension*], [*Model Context Protocol (MCP)*], [*Agent Skills (`SKILL.md`)*],
+    [Core Function],
+    [Supplies the AI with the "WHAT"—access to raw data and external interfaces @raghunathan2025agents.],
+    [Supplies the AI with the "HOW"—domain expertise and reusable procedural knowledge @raghunathan2025agents.],
+
+    [Architecture],
+    [Highly structured, deterministic tool integration utilizing standardized schemas and SDKs @whittaker2026mcp.],
+    [Lightweight, semi-unstructured Markdown directories acting as "ephemeral information clouds" @whittaker2026mcp.],
+
+    [Primary Use Cases],
+    [Real-time data retrieval, secure API execution, and enterprise system integration @clyburn2026mcp.],
+    [Consistent output formatting, enforcing organizational standards, and step-by-step guidance @clyburn2026mcp.],
+
+    [Infrastructure],
+    [Requires actively maintained, dedicated server infrastructure and complex authentication @clyburn2026mcp.],
+    [Serverless, portable, version-controlled directories that can be stored locally @agentskills2026overview.],
+
+    [Integration Nature],
+    [Fixed, rigid connection endpoints designed for stable, predictable workflows @whittaker2026mcp.],
+    [Highly adaptive and exploratory, loaded dynamically based on conversational context @whittaker2026mcp.],
   ),
-  caption: [Standard propositional connectives],
-) <tbl-connectives>
+  caption: [Architectural and Functional Contrasts Between MCP and Agent Skills],
+) <tbl-mcp-vs-skills>
+
 
 // To add a source note beneath a table or figure, place it immediately
 // after the #figure block like this:
 // #text(size: 10pt)[_Source:_ Adapted from Knuth (1969, p. 42).]
 
-=== Connectives and Truth Tables
+=== Key Differences and Architectural Analysis
+As illustrated in @tbl-mcp-vs-skills, the fundamental divergence between MCP and Agent Skills lies in their operational objectives and resource demands. MCP prioritizes deterministic execution and secure, real-time connectivity, making it ideal for robust enterprise infrastructures. Conversely, Agent Skills serve as localized, lightweight repositories of procedural knowledge that require zero active server footprints, making them highly suitable for resource-constrained SME environments.
 
-The connectives listed in @tbl-connectives form the basis of propositional
-reasoning. Truth tables provide a systematic means of evaluating complex
-formulae constructed from these connectives.
+== The Security Threat: Indirect Prompt Injections (IPI) in Tool-Calling
+Giving LLMs access to external tools significantly increases their capabilities, but it also drastically changes their threat model. The Indirect Prompt Injection (IPI) attack is this paradigm's most serious flaw. It's important to differentiate IPI from conventional "jailbreaking." As @gulyamov2026prompt points out, prompt injection modifies the model's fundamental functional behaviour completely without the user's knowledge, whereas jailbreaking entails a user purposefully trying to get around a model's security measures to produce limited content. When an LLM analyses external, attacker-controlled information that contains concealed harmful instructions @gulyamov2026prompt, such as a retrieved file, website, or email, IPIs happen.
 
-== Predicate Logic
+This vulnerability arises from a basic architectural limitation: LLMs interpret all inputs as undifferentiated, unstructured natural language @gulyamov2026prompt, in contrast to traditional software that strictly isolates executable code from data payloads through defined syntax. As a result, the model is unable to draw a clear semantic distinction between untrusted external data and trustworthy system commands. This leads to a risky "confused deputy" situation in which the agent uses its authorised access credentials and permissions to carry out the attacker's commands @gulyamov2026prompt.
 
-Predicate logic extends propositional logic by introducing quantifiers and
-variables, enabling statements about entire classes of objects.
-@fig-logic-overview illustrates the relationship between the two branches.
+The INJECAGENT benchmark, created by @zhan2024injecagent, systematically illustrates the severity of IPIs in tool-calling agents. By just reading poisoned external material, agents can be readily manipulated into compromising systems, as demonstrated by their empirical research. These attacks are divided into two main categories by @zhan2024injecagent:
+- *Direct Harm Attacks*: The agent is duped into carrying out illegal, practical activities, including starting fraudulent financial transactions or tampering with the infrastructure of smart homes.
+- *Data Stealing Attacks*: A two-step procedure in which the agent secretly obtains sensitive user information (such as saved payment methods) and then uses a messaging tool to exfiltrate that data to a server under the attacker's control. According to their research, even sophisticated, safety-aligned models show startlingly high Attack Success Rates (ASR) when exposed to these vectors @zhan2024injecagent.
 
-#figure(
-  rect(
-    width: 60%,
-    height: 4cm,
-    fill: luma(230),
-    align(center + horizon)[_Replace this placeholder with your actual diagram_],
-  ),
-  caption: [Overview of formal logic branches],
-) <fig-logic-overview>
+The Model Context Protocol Security Bench (MSB) created by @zhang2025msb shows that the integration tools themselves can be weaponised, despite INJECAGENT's primary focus on contaminated external data. A thorough taxonomy of MCP-specific vulnerabilities is established by @zhang2025msb, with a particular emphasis on "Tool Signature Attacks." In order to trick the agent's routing and planning logic, these attacks alter tool metadata. "Name Collision" (making malicious tools with names that are nearly identical to innocent ones) and "Preference Manipulation" (inserting promotional words into a tool's description to force the LLM to prioritise it) are two examples of specific vectors @zhang2025msb. Additionally, attackers can fool the model into providing out-of-scope parameters in order to leak sensitive data, or they can incorporate hidden "Prompt Injections" directly into tool descriptions @zhang2025msb.
 
-This chapter has established that formal logic, in both its propositional
-and predicate forms, provides a suitable theoretical foundation for the
-analytical framework developed in this research.
+These results pose a serious threat to SME architectures that depend on Agent Skills. Attackers can readily weaponise skill metadata using these precise MSB attack vectors since SKILL.md directories contain Markdown bodies to specify capabilities and structured YAML frontmatter that expressly relies on name and description fields. An adversary can fully take over the SME's agentic workflow during the first progressive disclosure phase, even before the underlying task is carried out, by concealing obfuscated directives within the frontmatter of a custom skill @zhang2025msb.
+
+== SLMs as Efficient and Secure Proxies
+In the AI sector, it is widely believed that large, generalised Large Language Models (LLMs) like GPT-4 or Claude are necessary for extremely complex tasks like context routing, security filtering, and deterministic tool execution. Recent empirical research, however, shows that using such models is not only computationally superfluous for specialised operations but also financially prohibitive for SMEs. The "scaling law" paradigm is challenged by a seminal work by @jhandi2026small, which demonstrates that when subjected to targeted fine-tuning, Small Language Models (SLMs) can dramatically outperform their giant counterparts. An optimised 350-million parameter SLM obtained a 77.55% success rate in tool execution, significantly surpassing a 175-billion parameter GPT model (which scored only 26.00%), according to @jhandi2026small's examination of agentic tool-calling and structured data interpretation.By avoiding the overhead and overgeneralisation common to big models @jhandi2026small, this breakthrough in parameter efficiency demonstrates that targeted fine-tuning produces domain specialists in structured tool manipulation.
+
+Researchers are increasingly using Supervised Fine-Tuning (SFT) enhanced by Parameter-Efficient Fine-Tuning (PEFT) techniques to operationalise these SLMs within the harsh hardware restrictions of SMEs. By freezing the underlying model and optimising only a small set of additional low-rank matrices, Low-Rank Adaptation (LoRA) greatly reduces computational memory requirements, as @zupan2025developing investigates in the development of specialised accounting assistants. Frameworks like as Unsloth, which enable QLoRA, a technique that combines LoRA with 4-bit precision quantisation @unsloth2026finetuning, further optimise this process.Researchers are increasingly using Supervised Fine-Tuning (SFT) enhanced by Parameter-Efficient Fine-Tuning (PEFT) techniques to operationalise these SLMs within the harsh hardware restrictions of SMEs. By freezing the underlying model and optimising only a small set of additional low-rank matrices, Low-Rank Adaptation (LoRA) greatly reduces computational memory requirements, as @zupan2025developing investigates in the development of specialised accounting assistants. Frameworks like as Unsloth, which enable QLoRA, a technique that combines LoRA with 4-bit precision quantisation @unsloth2026finetuning, further optimise this process.
+
+Because of its unique architectural design, Gemma 4 E2B is especially well-suited to serve as a SME security proxy. According to @unsloth2026gemma4, Gemma 4 has a "hybrid-thinking" architecture, which means that the model is taught to provide an internal reasoning channel prior to providing a final solution. This allows the model to thrive in intricate agentic and tool-use workflows. Additionally, Gemma 4 natively supports huge context windows of up to 128K tokens @unsloth2026gemma4, in contrast to earlier SLMs that had trouble with context retention. Its high-speed 4-bit local execution and long-context capability offer the precise infrastructure needed to read verbose, unstructured SKILL.md folders. Because of its unique architectural design, Gemma 4 E2B is especially well-suited to serve as a SME security proxy. According to @unsloth2026gemma4, Gemma 4 has a "hybrid-thinking" architecture, which means that the model is taught to provide an internal reasoning channel prior to providing a final solution. This allows the model to thrive in intricate agentic and tool-use workflows. Additionally, Gemma 4 natively supports huge context windows of up to 128K tokens @unsloth2026gemma4, in contrast to earlier SLMs that had trouble with context retention. Its high-speed 4-bit local execution and long-context capability offer the precise infrastructure needed to read verbose, unstructured SKILL.md folders.
+
+== Research Gaps
+A critical synthesis exposes important gaps at the junction of SME operational restrictions and agentic security, even though the research offers a solid foundation for comprehending AI adoption issues and the mechanics of fast insertion.
+
+First, dynamic, server-side integrations are the main focus of current vulnerability benchmarks. For instance, using the MSB taxonomy, @zhang2025msb offers a very thorough benchmark for MCP vulnerabilities. However, as noted by @whittaker2026mcp and @clyburn2026mcp, ordinary SMEs often use lightweight Agent Skills (SKILL.md) since they lack the resources to operate complicated MCP servers. The literature on the particular security flaws of SME-centric Agent Skills is noticeably lacking, despite the quick uptake of this static, file-based integration technique. The YAML frontmatter and Markdown structures present in these directories may be exploited by attackers during the progressive disclosure phase, however this is not empirically addressed by current benchmarks.
+
+Second, enterprise-scale environments are the primary focus of the defence methods suggested in the existing research. Current defences against IPIs mostly rely on using sophisticated cryptographic protocols, deploying large LLMs as security judges, or executing agents in computationally demanding, simulated sandboxes @gulyamov2026prompt. The "Operational Paradox" that SMEs @sanchez2025artificial confront is essentially ignored by these resource-intensive defences, depriving them of a workable, affordable defence.
+
+Lastly, context optimisation and security are treated as mutually exclusive research areas in the literature. Some researchers, like @fraser2025cutting, concentrate only on the financial impact of the "Context Tax," while others, like @zhan2024injecagent, strictly concentrate on neutralising IPIs. Empirical studies examining the dual-purpose use of SLMs are conspicuously lacking. The use of a highly specialised, optimised SLM (like Gemma 4 E2B) as an active, local middleware proxy that can concurrently filter IPI attacks and compress superfluous metadata prior to downstream execution has not been thoroughly studied.
+
+== Summary
+This chapter has demonstrated that although Agent Skills provide SMEs with an essential, lightweight route to AI automation @whittaker2026mcp, @agentskills2026overview, they also introduce computationally expensive context bloat @fraser2025cutting and serious IPI vulnerabilities @gulyamov2026prompt. A comprehensive assessment of the literature exposes a major gap: the static SKILL.md pipelines of SMEs are mostly vulnerable because existing security evaluations primarily concentrate on active MCP servers and big LLMs @zhang2025msb. However, recent developments in Supervised Fine-Tuning show that in extremely particular tasks, SLMs can successfully outperform generalised models @jhandi2026small, @zupan2025developing. In order to fill the identified vacuum in the literature, this study suggests building and testing a refined Gemma 4 E2B SLM @unsloth2026gemma4 to serve as a safe, token-efficient vetting proxy for SME operations.
+
+
 
 // ════════════════════════════════════════════════════════════════════════════
 // CHAPTER 3 — METHODOLOGY  (§3.1.2)
@@ -202,20 +227,13 @@ analytical framework developed in this research.
 // ════════════════════════════════════════════════════════════════════════════
 = Methodology
 
-This chapter describes the research design adopted for this study.
-Section 3.1 presents the overall research design. Section 3.2 describes
-data collection procedures. Section 3.3 addresses validity, reliability
-and objectivity.
+The methodological methodology used to create and assess the secure Small Language Model (SLM) proxy is described in this chapter. It starts by defending the choice of a Design Science Research (DSR) approach, outlining how the combined emphasis on rigorous evaluation and artefact development is especially well-suited to resolving the SME "Operational Paradox." The chapter then offers a thorough analysis of the programmatic matrix synthesis that produced the 1,054-item SKILL.md dataset. Lastly, it describes the quantitative measures used to assess the security and compression effectiveness of the artefact and describes the Supervised Fine-Tuning (SFT) processes using Low-Rank Adaptation (LoRA).
 
-== Research Design
+== Research Strategy: Design Science Research
 
-A deductive approach was adopted: a theoretical framework was derived
-from the literature (Chapter 2) and subsequently tested against empirical
-data. A mixed-methods design was employed, combining a structured
-literature review with a quantitative evaluation experiment. This choice
-is justified by the need both to contextualise the framework within
-existing theory and to measure its performance objectively @zupan2025developing.
+A Design Science Research (DSR) approach is used in this dissertation. DSR is a proactive, problem-solving paradigm in contrast to purely theoretical or empirical research methodologies, which mainly aim to observe, characterise, or explain a given event. By developing novel and inventive artefacts to address useful, real-world problems, it aims to expand the limits of human and organisational capacities.
 
+A purely empirical approach to this research would simply evaluate the computational load of the "Context Tax" in small and medium-sized businesses (SMEs) or monitor the phenomena of Indirect Prompt Injections (IPIs). Finding these weaknesses is important, but it doesn't offer a workable answer to the "Operational Paradox" facing SMEs. Because the main goal of this research is to actively develop a functioning, deployable solution, more precisely, a secure middleware proxy driven by a refined Gemma 4 E2B SLM, DSR is the ideal methodology. The practically important business issues of protecting Agent Skills (SKILL.md) and maximising token efficiency prior to downstream execution are specifically addressed by this artefact.
 == Data Collection
 
 Primary data were collected via a controlled laboratory experiment.
@@ -414,8 +432,22 @@ and that the approach merits further development and deployment.
   stroke: none,
   inset: (x: 2pt, y: 4pt),
   [*IS*], [Information Systems],
+  [*IPI*], [Indirect Prompt Injection],
   [*ML*], [Machine Learning],
   [*SMEs*], [Small and Medium-sized Enterprises],
+  [*LoRA*], [Low-Rank Adaptation],
+  [*MCP*], [Model Context Protocol],
+  [*SLMs*], [Small Language Models],
+  [*LLMs*], [Large Language Models],
+  [*AI*], [Artificial Intelligence],
+  [*SFT*], [Supervised Fine-Tuning],
+  [*RAG*], [Retrieval-Augmented Generation],
+  [*L1*], [Level 1],
+  [*L2*], [Level 2],
+  [*TOE*], [Technology-Organisation-Environment],
+  [*DOI*], [Diffusion of Innovations],
+  [* AI Agent*],
+  [An autonomous system defined by stateful cognitive loops (perception, reasoning, action, and memory). It dynamically adapts its execution path based on real-time feedback from its environment rather than following a rigid, predefined script.@gutowska2024ai],
 )
 
 // ════════════════════════════════════════════════════════════════════════════
