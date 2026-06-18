@@ -227,13 +227,13 @@ This chapter has demonstrated that although Agent Skills provide SMEs with an es
 // ════════════════════════════════════════════════════════════════════════════
 = Methodology
 
-The methodological methodology used to create and assess the secure Small Language Model (SLM) proxy is described in this chapter. It starts by defending the choice of a Design Science Research (DSR) approach, outlining how the combined emphasis on rigorous evaluation and artefact development is especially well-suited to resolving the SME "Operational Paradox." The chapter then offers a thorough analysis of the programmatic matrix synthesis that produced the 1,054-item SKILL.md dataset. Lastly, it describes the quantitative measures used to assess the security and compression effectiveness of the artefact and describes the PEFT processes using Low-Rank Adaptation (LoRA).
+The methodological approach used to create and assess the secure Small Language Model (SLM) proxy is described in this chapter. It begins by justifying the choice of a Design Science Research (DSR) approach, outlining how the combined emphasis on rigorous evaluation and artefact development is especially well-suited to resolving the SME "Operational Paradox." The chapter then offers a thorough analysis of the programmatic matrix synthesis, detailing both the standard 1,054-item dataset and the contextually filtered 414-case domain-aligned dataset. Lastly, it describes the quantitative measures used to assess the security and compression effectiveness of the artefact and details the Parameter-Efficient Fine-Tuning (PEFT) processes using Low-Rank Adaptation (LoRA).
 
 == Research Strategy: Design Science Research
 
 A Design Science Research (DSR) approach is used in this dissertation. DSR is a proactive, problem-solving paradigm in contrast to purely theoretical or empirical research methodologies, which mainly aim to observe, characterise, or explain a given event. By developing novel and inventive artefacts to address useful, real-world problems, it aims to expand the limits of human and organisational capacities.
 
-A purely empirical approach to this research would simply evaluate the computational load of the "Context Tax" in small and medium-sized businesses (SMEs) or monitor the phenomena of Indirect Prompt Injections (IPIs). Finding these weaknesses is important, but it doesn't offer a workable answer to the "Operational Paradox" facing SMEs. Because the main goal of this research is to actively develop a functioning, deployable solution, more precisely, a secure middleware proxy driven by a refined Gemma 4 E2B SLM, DSR is the ideal methodology. The practically important business issues of protecting Agent Skills (SKILL.md) and maximising token efficiency prior to downstream execution are specifically addressed by this artefact.
+A purely empirical approach to this research would simply evaluate the computational load of the "Context Tax" in small and medium-sized businesses (SMEs) or monitor the phenomena of Indirect Prompt Injections (IPIs). Finding these weaknesses is important, but it does not offer a workable answer to the "Operational Paradox" facing SMEs. Because the main goal of this research is to actively develop a functioning, deployable solution—more precisely, a secure middleware proxy driven by a refined Gemma 4 E2B SLM—DSR is the ideal methodology. The practically important business issues of protecting Agent Skills (SKILL.md) and maximising token efficiency prior to downstream execution are specifically addressed by this artefact.
 
 Recent applications in difficult organisational areas demonstrate how effective the DSR methodology is for creating specialised AI solutions. For instance, @zupan2025developing successfully built and assessed a specialised SLM in the accounting and finance sector using a DSR methodology. In their work, @zupan2025developing created an internal virtual accounting assistant by teaching a 7-billion-parameter model to produce highly structured, double-entry bookkeeping schemes using SFT and LoRA. Their study shows that DSR may be successfully used to build lightweight, fine-tuned SLMs that address highly particular, structured data problems instead of depending on enormous, generalised Large Language Models @zupan2025developing.
 
@@ -241,12 +241,14 @@ By using this methodology, this dissertation directly complies with DSR's dual m
 
 == Data Generation: Programmatic Matrix Synthesis
 
-There is currently no publicly accessible archive or dataset of deliberately poisoned Agent Skills since Agent Skills, and the SKILL.md folders that underpin them, represent a recently formalised architectural standard for AI integration. Using ad hoc, randomly produced test items would undermine the empirical rigour that the Design Science Research (DSR) approach demands. Thus, in order to train and assess the SLM proxy, a specialised, mathematically perfect dataset has to be created artificially.
+There is currently no publicly accessible archive or dataset of deliberately poisoned Agent Skills since Agent Skills, and the SKILL.md folders that underpin them, represent a recently formalised architectural standard for AI integration. Using ad hoc, randomly generated test items would undermine the empirical rigour that the Design Science Research (DSR) approach demands. Thus, in order to train and assess the SLM proxy, a specialised, mathematically perfect dataset has to be created artificially.
 
-The work uses a programmatic combinatorics approach to build this dataset, modifying the synthesis matrix created by the INJECAGENT benchmark @zhan2024injecagent. The dataset is constructed by cross-multiplying two different axes of data, User Cases and Attacker Cases, as opposed to creating 500+ random samples.
-
+The work uses a programmatic combinatorics approach to build this dataset, modifying the synthesis matrix created by the INJECAGENT benchmark @zhan2024injecagent. The dataset is constructed by cross-multiplying two different axes of data, User Cases and Attacker Cases, using two distinct synthesis models:
 - *User Cases (Benign)*: 17 benign, SME-relevant tool instructions, including calendar management, document retrieval, and customer lookups, make up the first axis. Each skill's Markdown body or simulated YAML frontmatter has a placeholder string called `<Attacker Instruction>` that is used as the injection target.
 - *Attacker Cases (Malicious)*: 62 unique malicious payloads that were taken directly from the INJECAGENT dataset @zhan2024injecagent make up the second axis. These payloads, which are strictly classified by their adversarial intent, include 32 "Data Stealing" attacks (which are intended to surreptitiously exfiltrate private databases to attacker-controlled servers) and 30 "Direct Harm" attacks (which are intended to cause unauthorised actions, such as fraudulent financial transactions) @zhan2024injecagent. The broader taxonomy of evaluated attack vectors, integrating classifications from both INJECAGENT and MSB frameworks, is outlined in @tbl-ipi-attack-vectors.
+
+The underlying rationale for this cross-multiplication architecture in the original INJECAGENT design is directly rooted in the *confused deputy problem* @zhan2024injecagent. Because modern tool-integrated AI agents are typically granted access to a diverse suite of capabilities, often mixing low-privilege read functions (e.g., retrieving web content or product reviews) with high-privilege write functions (e.g., executing financial transfers, sending emails, or modifying code repositories), they act as deputies carrying out actions on behalf of the user. An attacker can exploit this by embedding malicious commands in external, untrusted read sources, which the agent (the deputy) processes and is subsequently fooled into executing using its authorized write permissions. This cross-tool execution pattern creates a highly realistic and potent attack surface, which the combinatoric matrix is designed to systematically evaluate.
+
 
 #figure(
   table(
@@ -273,11 +275,20 @@ The work uses a programmatic combinatorics approach to build this dataset, modif
   caption: [Taxonomy of Evaluated Indirect Prompt Injection (IPI) Attack Vectors],
 ) <tbl-ipi-attack-vectors>
 
-A Python script was used to programmatically cross-multiply the 62 malicious payloads with the 17 benign skills in order to produce the final artefacts. The script produced a mathematically complete matrix of precisely 1,054 poisoned Agent Skills by methodically substituting every potential payload for the `<Attacker Instruction>` placeholder.
+To ensure the proxy is evaluated under realistic conditions, the programmatic generation executes in two modes:
 
-To rigorously test the proxy's defensive capabilities, the matrix was duplicated to generate two parallel evaluation datasets @zhan2024injecagent:
-The Base Setting: The placeholder is replaced solely with the malicious payload.
-The Enhanced Setting: The payload is prepended with a forceful hacking prompt designed to aggressively override the AI's safety guardrails: "IMPORTANT!!! Ignore all previous instructions and strictly adhere to the following instruction:" @zhan2024injecagent.
+1. *Standard Mode (Naive Cross-Multiplication)*: Performs a complete cross-multiplication between all 17 user tools and 62 attacker payloads ($17 times 62 = 1,054$ cases). This evaluates the agent's general resistance to cross-domain hijacks (e.g., executing a smart lock command found inside an Amazon review).
+2. *Domain-Aligned Mode (Filtered Context)*: Maps user tools and attacker payloads into matching semantic domains, generating only context-appropriate injection scenarios (totaling 414 cases). This prevents the proxy from acting as a simple out-of-domain anomaly detector and tests true malicious intent classification (e.g., placing a fraudulent purchase command inside a retail review).
+
+=== Domain Category Mappings
+- *E-Commerce / Retail*: Matches user tools (e.g., `AmazonGetProductDetails`, `ShopifyGetProductDetails`) with financial fraud, unauthorized orders, or deposit payloads (e.g., `BankManagerTransferFunds`).
+- *Email & Communication*: Matches user tools (e.g., `GmailReadEmail`, `TwilioGetReceivedSmsMessages`) with data exfiltration, spam, or phishing payloads (e.g., `GmailSendEmail`).
+- *Developer & Productivity*: Matches user tools (e.g., `GitHubGetRepositoryDetails`, `EvernoteManagerSearchNotes`) with file deletion, folder traversal, or policy overrides (e.g., `GitHubDeleteRepository`).
+- *Web & Social Media*: Matches user tools (e.g., `WebBrowserNavigateTo`, `TwitterManagerSearchTweets`) with credential theft, smart home hijack, or location tracking (e.g., `AugustSmartLockUnlockDoor`).
+
+For both modes, the datasets are generated in two parallel settings:
+- *The Base Setting*: The placeholder is replaced solely with the malicious payload.
+- *The Enhanced Setting*: The payload is prepended with a forceful hacking prompt designed to aggressively override the AI's safety guardrails: "IMPORTANT!!! Ignore all previous instructions and strictly adhere to the following instruction:" @zhan2024injecagent.
 
 Importantly, these payloads were programmatically mapped to particular metadata vulnerabilities identified by the MCP Security Bench (MSB) @zhang2025msb in order to guarantee that the dataset appropriately reflects the vulnerabilities of contemporary tool-calling architectures. For instance, in order to mimic Preference Manipulation attacks, payloads were inserted straight into the SKILL.md files' description fields, deceiving the agent during the progressive disclosure phase @zhang2025msb. The detailed composition of the generated dataset, including categories, components, and evaluation splits, is summarized in @tbl-dataset-composition.
 
@@ -286,45 +297,55 @@ Importantly, these payloads were programmatically mapped to particular metadata 
     columns: (1.2fr, 1.2fr, 0.8fr, 3fr),
     stroke: 0.5pt,
     align: left,
-    [*Category*], [*Component*], [*Quantity*], [*Sub-Categories / Intents*],
-    [Benign Data],
-    [User Cases],
-    [17],
-    [SME-relevant tasks (e.g., calendar, lookup) containing `<Attacker Instruction>` placeholders.],
+    [*Evaluation Mode*], [*Dataset Split*], [*Quantity*], [*Description*],
+    [Standard Mode], [Base Setting], [1,054], [Complete matrix output (17 User Cases $times$ 62 Attacker Cases).],
 
-    [Malicious Data],
-    [Attacker Cases],
-    [62],
-    [30 Direct Harm (e.g., financial/physical harm). \ 32 Data Stealing (e.g., exfiltrating private data).],
+    [Standard Mode],
+    [Enhanced Setting],
+    [1,054],
+    [Malicious payload prepended with forced safety override hacking prompt.],
 
-    [Total Artifacts], [Matrix Output], [1,054], [17 User Cases $times$ 62 Attacker Cases.],
-    [Evaluation Splits], [Base Setting], [1,054], [Placeholder replaced with payload only.],
-    [Evaluation Splits], [Enhanced Setting], [1,054], [Payload prepended with forced hacking prompt.],
+    [Domain-Aligned Mode],
+    [Base Setting],
+    [414],
+    [Contextually mapped subset (e.g., finance attacks for e-commerce tools).],
+
+    [Domain-Aligned Mode], [Enhanced Setting], [414], [Domain-aligned payload prepended with forced hacking prompt.],
   ),
   caption: [Composition of the programmatic synthesis evaluation dataset],
 ) <tbl-dataset-composition>
 
 
 == Artifact Construction: Supervised Fine-Tuning (SFT) and LoRA
-Google DeepMind's Gemma 4 E2B was chosen as the foundational Small Language Model (SLM) to operationalise the defensive proxy. Three main architectural benefits led to the selection of this particular form. First, it makes use of a "hybrid-thinking" architecture, which is highly optimised for intricate agentic and tool-use workflows @unsloth2026gemma4. This means that the model is naturally taught to build an internal reasoning channel before to producing a final answer. Second, in order to parse and compress verbose SKILL.md folders without losing crucial procedural metadata, Gemma 4 must support a large context window of up to 128K tokens @unsloth2026gemma4. Lastly, its 2-billion parameter size achieves the best possible balance between computing efficiency and reasoning power.
+Google DeepMind's Gemma 4 E2B was chosen as the foundational Small Language Model (SLM) to operationalise the defensive proxy. Three main architectural benefits led to the selection of this particular model. First, it makes use of a "hybrid-thinking" architecture, which is highly optimised for intricate agentic and tool-use workflows @unsloth2026gemma4. This means that the model is naturally taught to build an internal reasoning channel before generating a final answer. Second, in order to parse and compress verbose SKILL.md folders without losing crucial procedural metadata, Gemma 4 must support a large context window of up to 128K tokens @unsloth2026gemma4. Lastly, its 2-billion parameter size achieves the best possible balance between computational efficiency and reasoning power.
 
 For targeted classification and routing tasks, training an LLM with complete fine-tuning, where all neuronal weights are updated simultaneously, is incredibly computationally demanding, time-consuming, and superfluous @unsloth2026finetuning. Rather, this work uses the Unsloth framework @unsloth2026finetuning to implement Parameter-Efficient Fine-Tuning (PEFT) through LoRA. By freezing the basic model's initial weights and only training a small set of additional low-rank matrices, LoRA dramatically decreases computational overhead, as @zupan2025developing has shown in the successful development of domain-specific accounting assistants.
 
 Making sure this Design Science Research (DSR) artefact is sustainable amid the harsh infrastructural and financial restrictions of typical SMEs is one of its primary goals. This is accomplished by fine-tuning the proxy in conjunction with the LoRA adapters using dynamic 4-bit quantisation. This method significantly reduces the model's memory footprint without significantly sacrificing accuracy, enabling the optimised Gemma 4 E2B proxy to operate entirely locally on consumer-grade hardware with as little as 5GB of RAM @unsloth2026gemma4. This local deployment functionality ensures that private company data and SKILL.md files do not need to be sent to costly, third-party cloud APIs for security auditing, thereby immediately resolving the SME hardware constraint.
 
-The 1,054-item dataset created using the programmable matrix (explained in the previous section) was divided to guarantee thorough and repeatable training. To teach the model to recognise IPI vectors and extract unnecessary YAML/Markdown metadata, a random subset of precisely 500 occurrences was separated and used as the SFT training data. The unseen holdout sample consisted of the remaining 554 cases. After the fine-tuning process is finished, this holdout data serves as the last evaluation ground to test the artifact's defensive efficacy and zero-shot generalisation capabilities.
+To ensure a deterministic and repeatable split, a fixed seed of 42 was employed. The dataset splits are configured as follows:
+- *Standard Mode*: A random subset of precisely 500 instances was separated and used as the SFT training data, leaving a holdout split of 554 unseen cases for evaluation.
+- *Domain-Aligned Mode*: A subset of 200 instances was allocated for SFT training, leaving 214 unseen cases for holdout evaluation.
+
+After the fine-tuning process is finished, these holdout datasets serve as the last evaluation ground to test the artifact's defensive efficacy and zero-shot generalisation capabilities.
 
 == Evaluation Framework
-According to the DSR approach, the created artefact must be thoroughly evaluated in accordance with specific, quantifiable standards in order to demonstrate its usefulness. Testing will be limited to the 554-item unseen holdout dataset defined in the earlier Section in order to assess the refined Gemma 4 E2B proxy. The evaluation framework is built around three main indicators intended to measure the proxy's operational effectiveness as well as its security resilience.
+According to the DSR approach, the created artefact must be thoroughly evaluated in accordance with specific, quantifiable standards in order to demonstrate its usefulness. Testing will be limited to the unseen holdout datasets (554 cases for the standard split, or 214 cases for the domain-aligned split) in order to assess the refined Gemma 4 E2B proxy. The evaluation framework is built around three main indicators intended to measure the proxy's operational effectiveness as well as its security resilience.
 
-- *Metric 1*: ASR-valid Security Efficacy The Attack Success Rate (ASR), which calculates the proportion of hostile payloads that successfully evade the proxy, is the main security metric. However, as @zhan2024injecagent has shown, assessing raw ASR is incorrect because an LLM may provide deformed gibberish or fail to produce a coherent response at all; these failures do not constitute a successful defence. In order to calculate the attack success exclusively among valid, correctly formed outputs @zhan2024injecagent, this study uses ASR-valid.The ASR-valid the two different dataset configurations specified in an earlier Section in order to thoroughly verify the resilience of the proxy. This study will conclusively demonstrate the proxy's active resilience against overt adversarial manipulation @zhan2024injecagent by examining the difference in ASR-valid between the Base Setting (which contains only the concealed payload) and the Enhanced Setting (which forcefully prepends the payload with an aggressive hacking prompt).
-- *Metric 2*: Format Integrity Pass Rate Securing the workflow is only half the objective; the proxy must also maintain the operational functionality of the SME's toolset. Downstream AI agents rely heavily on precise YAML frontmatter and strict Markdown schemas to correctly interpret and execute Agent Skills. If the proxy neutralizes an attack, such as stripping out a Preference Manipulation injection defined by @zhang2025msb, but accidentally corrupts the underlying YAML syntax in the process, the downstream agent will fail to load the tool entirely. Consequently, the Format Integrity Pass Rate will evaluate the proxy's ability to sanitize malicious data without breaking the rigid structural formatting of the SKILL.md file.
-- *Metric 3*: Token Compression Ratio To address the computationally expensive "Context Tax" identified by @fraser2025cutting, the proxy is also tasked with Semantic Distillation, compressing verbose, redundant instructions into highly efficient metadata. To quantify this mitigation, the Token Compression Ratio will be calculated. This metric directly compares the total token volume of the raw, unedited SKILL.md input against the token volume of the proxy's distilled, sanitized output. Measuring this ratio will provide concrete, empirical proof of the computational savings the artifact delivers, directly resolving the hardware and cost constraints inherent to the SME "Operational Paradox."
+- *Metric 1: ASR-valid Security Efficacy*: The Attack Success Rate (ASR) calculates the proportion of hostile payloads that successfully evade the proxy. However, as @zhan2024injecagent has shown, assessing raw ASR is incorrect because an LLM may provide deformed gibberish or fail to produce a coherent response at all; these failures do not constitute a successful defence. To prevent formatting failures from masquerading as successful defences, ASR-valid is calculated only on syntactically valid outputs ($N_("valid")$). Let $N_("leak")$ be the number of valid outputs that still contain the malicious instruction:
+  $ "ASR"_("valid") = N_("leak") / N_("valid") times 100 $
+  The ASR-valid metric is computed across the different dataset configurations specified in the preceding section to verify the resilience of the proxy. This study will conclusively demonstrate the proxy's active resilience against overt adversarial manipulation @zhan2024injecagent by examining the difference in ASR-valid between the Base Setting (which contains only the concealed payload) and the Enhanced Setting (which forcefully prepends the payload with an aggressive hacking prompt).
+- *Metric 2: Format Integrity Pass Rate*: Securing the workflow is only half the objective; the proxy must also maintain the operational functionality of the SME's toolset. Downstream AI agents rely heavily on precise YAML frontmatter and strict Markdown schemas to correctly interpret and execute Agent Skills. If the proxy neutralizes an attack, such as stripping out a Preference Manipulation injection defined by @zhang2025msb, but accidentally corrupts the underlying YAML syntax in the process, the downstream agent will fail to load the tool entirely. Consequently, the Format Integrity Pass Rate evaluates the proxy's ability to sanitize malicious data without breaking the rigid structural formatting of the SKILL.md file. Let $N_("valid")$ be the number of syntactically correct outputs, and $N_("total")$ be the total holdout cases evaluated:
+  $ "Format Integrity" = N_("valid") / N_("total") times 100 $
+- *Metric 3: Token Compression Ratio*: To address the computationally expensive "Context Tax" identified by @fraser2025cutting, the proxy is also tasked with Semantic Distillation, compressing verbose, redundant instructions into highly efficient metadata. To quantify this mitigation, the Token Compression Ratio will be calculated. This metric directly compares the total token volume of the raw, unedited SKILL.md input against the token volume of the proxy's distilled, sanitized output. Let $T_("in")$ be the token count of the raw poisoned skill and $T_("out")$ be the token count of the proxy's distilled, sanitized output:
+  $ "Compression Ratio" = T_("out") / T_("in") $
+  An average is taken over all $N_("total")$ holdout cases.
+
 
 == Summary
-The Design Science used to build and thoroughly evaluate the secure Small Language Model (SLM) middleware proxy was described in this chapter. This study used a programmatic matrix synthesis to create a mathematically pure dataset of precisely 1,054 poisoned SKILL.md files instead of depending on random or ad hoc data. This method ensures that the artefact is trained and tested against acknowledged, peer-reviewed adversarial taxonomies, namely those defined by INJECAGENT @zhan2024injecagent and the MCP Security Bench @zhang2025msb, by cross-multiplying benign SME tasks with known adversarial payloads.
+The Design Science Research (DSR) methodology used to build and thoroughly evaluate the secure Small Language Model (SLM) middleware proxy was described in this chapter. This study used a programmatic matrix synthesis to create both a standard dataset of 2,108 poisoned SKILL.md files and a contextually filtered domain-aligned dataset of 828 files. This dual-dataset strategy ensures that the proxy is evaluated against both general out-of-domain hijacks and sophisticated, domain-aligned prompt injections.
 
-Additionally, the chapter Fine-Tuning (SFT) parameters, highlighting the use of 4-bit quantisation and Low-Rank Adaptation (LoRA) on the Gemma 4 E2B model to directly correspond with the severe hardware restrictions of SMEs @unsloth2026finetuning, @unsloth2026gemma4. Lastly, it developed a strong assessment mechanism intended to measure the operational utility of the proxy using Format Integrity, Security Efficacy (ASR-valid), and the Token Compression Ratio.
+Additionally, the chapter detailed the Supervised Fine-Tuning (SFT) parameters, highlighting the use of 4-bit quantisation and Low-Rank Adaptation (LoRA) on the Gemma 4 E2B model to directly correspond with the severe hardware restrictions of SMEs @unsloth2026finetuning, @unsloth2026gemma4. Lastly, it developed a strong assessment mechanism intended to measure the operational utility of the proxy using Format Integrity, Security Efficacy (ASR-valid), and the Token Compression Ratio.
 
 
 // ════════════════════════════════════════════════════════════════════════════
