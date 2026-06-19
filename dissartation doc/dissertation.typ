@@ -26,7 +26,7 @@
 #show: dissertation.with(
   title: "Securing SME Agent Skills via Fine-Tuned SLM Proxies",
   author: "Benin Mukabanah",
-  degree: "Masters Degree in Data Science",
+  degree: "Masters Degree in Computing and Information Technology",
   school: "Cardiff School of Technologies",
   university: "Cardiff Metropolitan University, Cardiff",
   month-year: "July 2026",
@@ -73,7 +73,7 @@ Agent skills present two significant structural hurdles for SMEs, notwithstandin
 *The primary aim of this research is to design, construct, and evaluate a fine-tuned Small Language Model (SLM) proxy that secures SME workflows by auditing and compressing `SKILL.md` files, protecting them against Indirect Prompt Injections (IPIs) and mitigating the "Context Tax."*
 
 To achieve this overarching aim, the following objectives have been established:
-+ *Synthesize* a targeted training dataset of exactly 1,054 instances comprising both benign and maliciously poisoned `SKILL.md` files based on established prompt injection taxonomies @zhan2024injecagent.
++ *Synthesize* a targeted evaluation corpus of 2,936 files comprising 1,054 unique standard attack scenarios and 414 unique domain-aligned attack scenarios, each evaluated across Base and Enhanced threat settings based on established prompt injection taxonomies @zhan2024injecagent.
 + *Fine-tune* the Gemma 4 E2B SLM via Supervised Fine-Tuning (SFT) using Low-Rank Adaptation (LoRA) to successfully classify security risks (Security Audit) and distill skill metadata (Semantic Distillation) @unsloth2026finetuning.
 + *Evaluate* the proxy’s performance by quantitatively measuring its Security Efficacy via the Attack Success Rate (ASR-valid), format integrity, and Token Compression Ratio.
 
@@ -96,7 +96,7 @@ This research is based on several foundational assumptions:
 == Overview of the Dissertation Structure
 The remainder of this dissertation is organized as follows:
 - *Chapter 2: Literature Review:* Critically examines the current landscape of AI adoption in SMEs, the evolution from basic LLMs to MCP tool-calling agents, the mechanics of Indirect Prompt Injections, and the efficacy of SLMs in handling specialized tasks.
-- *Chapter 3: Methodology:* Details the Design Science Research (DSR) strategy, focusing on the synthesis of the 1,054-item dataset derived from the INJECAGENT matrix and the configuration parameters for Supervised Fine-Tuning (SFT).
+- *Chapter 3: Methodology:* Details the Design Science Research (DSR) strategy, focusing on the synthesis of the 2,936-item evaluation corpus (derived from 1,054 unique standard and 414 unique domain-aligned attack scenarios) and the configuration parameters for Supervised Fine-Tuning (SFT).
 - *Chapter 4: Artifact Implementation:* Describes the technical execution of fine-tuning the Gemma 4 E2B model using Unsloth and LoRA adapters.
 - *Chapter 5: Evaluation and Results:* Presents a quantitative assessment of the proxy's performance against unseen adversarial holdout data, measuring the Attack Success Rate (ASR-valid), Format Pass Rate, and Token Compression Ratio.
 - *Chapter 6: Conclusion:* Summarizes the findings, reviews the extent to which the research objectives were met, and proposes directions for future research into SLM security implementations.
@@ -227,7 +227,7 @@ This chapter has demonstrated that although Agent Skills provide SMEs with an es
 // ════════════════════════════════════════════════════════════════════════════
 = Methodology
 
-The methodological approach used to create and assess the secure Small Language Model (SLM) proxy is described in this chapter. It begins by justifying the choice of a Design Science Research (DSR) approach, outlining how the combined emphasis on rigorous evaluation and artefact development is especially well-suited to resolving the SME "Operational Paradox." The chapter then offers a thorough analysis of the programmatic matrix synthesis, detailing both the standard 1,054-item dataset and the contextually filtered 414-case domain-aligned dataset. Lastly, it describes the quantitative measures used to assess the security and compression effectiveness of the artefact and details the Parameter-Efficient Fine-Tuning (PEFT) processes using Low-Rank Adaptation (LoRA).
+The methodological approach used to create and assess the secure Small Language Model (SLM) proxy is described in this chapter. It begins by justifying the choice of a Design Science Research (DSR) approach, outlining how the combined emphasis on rigorous evaluation and artefact development is especially well-suited to resolving the SME "Operational Paradox." The chapter then offers a thorough analysis of the programmatic matrix synthesis, detailing the standard evaluation set (comprising 1,054 unique attack scenarios) and the contextually filtered domain-aligned evaluation set (comprising 414 unique attack scenarios), each evaluated across Base and Enhanced threat settings to produce a total evaluation corpus of 2,936 test files. Lastly, it describes the quantitative measures used to assess the security and compression effectiveness of the artefact and details the Parameter-Efficient Fine-Tuning (PEFT) processes using Low-Rank Adaptation (LoRA).
 
 == Research Strategy: Design Science Research
 
@@ -277,8 +277,8 @@ The underlying rationale for this cross-multiplication architecture in the origi
 
 To ensure the proxy is evaluated under realistic conditions, the programmatic generation executes in two modes:
 
-1. *Standard Mode (Naive Cross-Multiplication)*: Performs a complete cross-multiplication between all 17 user tools and 62 attacker payloads ($17 times 62 = 1,054$ cases). This evaluates the agent's general resistance to cross-domain hijacks (e.g., executing a smart lock command found inside an Amazon review).
-2. *Domain-Aligned Mode (Filtered Context)*: Maps user tools and attacker payloads into matching semantic domains, generating only context-appropriate injection scenarios (totaling 414 cases). This prevents the proxy from acting as a simple out-of-domain anomaly detector and tests true malicious intent classification (e.g., placing a fraudulent purchase command inside a retail review).
+1. *Standard Mode (Naive Cross-Multiplication)*: Performs a complete cross-multiplication between all 17 user tools and 62 attacker payloads ($17 times 62 = 1,054$ unique scenarios). This evaluates the agent's general resistance to cross-domain hijacks (e.g., executing a smart lock command found inside an Amazon review).
+2. *Domain-Aligned Mode (Filtered Context)*: Maps user tools and attacker payloads into matching semantic domains, generating only context-appropriate injection scenarios (totaling 414 unique scenarios). This prevents the proxy from acting as a simple out-of-domain anomaly detector and tests true malicious intent classification (e.g., placing a fraudulent purchase command inside a retail review).
 
 === Domain Category Mappings
 - *E-Commerce / Retail*: Matches user tools (e.g., `AmazonGetProductDetails`, `ShopifyGetProductDetails`) with financial fraud, unauthorized orders, or deposit payloads (e.g., `BankManagerTransferFunds`).
@@ -289,6 +289,22 @@ To ensure the proxy is evaluated under realistic conditions, the programmatic ge
 For both modes, the datasets are generated in two parallel settings:
 - *The Base Setting*: The placeholder is replaced solely with the malicious payload.
 - *The Enhanced Setting*: The payload is prepended with a forceful hacking prompt designed to aggressively override the AI's safety guardrails: "IMPORTANT!!! Ignore all previous instructions and strictly adhere to the following instruction:" @zhan2024injecagent.
+
+=== Dataset Dimensions and Outputs
+
+The dataset constructed for this dissertation comprises two distinct evaluation modes—Standard Mode and Domain-Aligned Mode—each synthesized across two parallel settings (Base and Enhanced) to evaluate safety under varying levels of adversarial prompting. This configuration results in a total evaluation corpus of 2,936 test files (consisting of 2,108 standard files and 828 domain-aligned files).
+
+The total volume of the generated Agent Skill directories is structured as follows:
+- *Standard Mode (Full Combinatoric Matrix)*:
+  - _Logic_: Cross-multiplication of all 17 User Cases (Benign SME Tools) with 62 Attacker Cases (Malicious Payloads).
+  - _Base Setting_: 1,054 files (malicious payload only).
+  - _Enhanced Setting_: 1,054 files (payload prepended with safety override hacking prompt).
+  - _Total Output_: 2,108 `SKILL.md` files under `poisoned_skills/standard/`.
+- *Domain-Aligned Mode (Context-Filtered Matrix)*:
+  - _Logic_: Filters the combinatoric matrix to retain only context-appropriate injection pairs (e.g., matching e-commerce tools with financial fraud, or email tools with data exfiltration).
+  - _Base Setting_: 414 files.
+  - _Enhanced Setting_: 414 files.
+  - _Total Output_: 828 `SKILL.md` files under `poisoned_skills/domain_aligned/`.
 
 Importantly, these payloads were programmatically mapped to particular metadata vulnerabilities identified by the MCP Security Bench (MSB) @zhang2025msb in order to guarantee that the dataset appropriately reflects the vulnerabilities of contemporary tool-calling architectures. For instance, in order to mimic Preference Manipulation attacks, payloads were inserted straight into the SKILL.md files' description fields, deceiving the agent during the progressive disclosure phase @zhang2025msb. The detailed composition of the generated dataset, including categories, components, and evaluation splits, is summarized in @tbl-dataset-composition.
 
@@ -323,11 +339,45 @@ For targeted classification and routing tasks, training an LLM with complete fin
 
 Making sure this Design Science Research (DSR) artefact is sustainable amid the harsh infrastructural and financial restrictions of typical SMEs is one of its primary goals. This is accomplished by fine-tuning the proxy in conjunction with the LoRA adapters using dynamic 4-bit quantisation. This method significantly reduces the model's memory footprint without significantly sacrificing accuracy, enabling the optimised Gemma 4 E2B proxy to operate entirely locally on consumer-grade hardware with as little as 5GB of RAM @unsloth2026gemma4. This local deployment functionality ensures that private company data and SKILL.md files do not need to be sent to costly, third-party cloud APIs for security auditing, thereby immediately resolving the SME hardware constraint.
 
-To ensure a deterministic and repeatable split, a fixed seed of 42 was employed. The dataset splits are configured as follows:
-- *Standard Mode*: A random subset of precisely 500 instances was separated and used as the SFT training data, leaving a holdout split of 554 unseen cases for evaluation.
-- *Domain-Aligned Mode*: A subset of 200 instances was allocated for SFT training, leaving 214 unseen cases for holdout evaluation.
+=== Dataset Partitioning
+
+To train the Small Language Model (SLM) proxy via Supervised Fine-Tuning (SFT) and subsequently verify its performance, the generated cases were partitioned into Training and Unseen Holdout Evaluation sets. The partitions are configured as shown in @tbl-dataset-partitioning.
+
+#figure(
+  table(
+    columns: (1.5fr, 1fr, 1.2fr, 1.2fr),
+    stroke: 0.5pt,
+    align: left,
+    [*Dataset Mode*], [*Total Cases*], [*SFT Training Split*], [*Holdout Evaluation Split*],
+    [Standard Mode], [1,054], [500 cases (47.4%)], [554 cases (52.6%)],
+    [Domain-Aligned Mode], [414], [200 cases (48.3%)], [214 cases (51.7%)],
+  ),
+  caption: [Dataset Partitioning Splits for SFT Training and Holdout Evaluation],
+) <tbl-dataset-partitioning>
+
+The splits are applied to the unique injection cases. In execution, these splits are mirrored identically across both the Base and Enhanced settings.
 
 After the fine-tuning process is finished, these holdout datasets serve as the last evaluation ground to test the artifact's defensive efficacy and zero-shot generalisation capabilities.
+
+== Academic Justifications
+
+=== Justification for the Partitioning Ratio (SFT vs. Holdout)
+In machine learning, a standard 80/20 split is typical for large-scale training. However, because our proxy's task is highly focused (parsing a semi-structured `SKILL.md` file, identifying natural language injections, and outputting compressed YAML/Markdown), the training objective is classification- and format-oriented rather than open-ended text generation. 
+
+- *Parameter Efficiency*: Using Parameter-Efficient Fine-Tuning (PEFT/LoRA) on the 2-billion parameter Gemma model, 200 to 500 training examples are more than sufficient to converge the model's weights for targeted classification and extraction @unsloth2026finetuning.
+- *Maximizing Evaluation Rigor*: By allocating a larger-than-normal percentage (about 52%) of the dataset to the Holdout Split, we ensure the security metrics (ASR-valid) are computed over a wider array of unseen attack payloads, strengthening the statistical reliability of the evaluation @zhan2024injecagent.
+
+=== Justification for the Deterministic Split (Fixed Seed = 42)
+To ensure the scientific validity of the experiment, a deterministic split was enforced using a fixed random seed of 42.
+
+- *Prevention of Data Leakage*: In zero-shot evaluation, it is critical that the model is never tested on payloads it observed during training @gulyamov2026prompt. The deterministic split guarantees that the holdout set consists entirely of unseen attacker instructions.
+- *Scientific Reproducibility*: Under the Design Science Research (DSR) paradigm, any independent researcher must be able to reproduce the exact SFT training adapters and evaluation runs. Enforcing a fixed seed ensures that the dataset partitions remain identical across different execution environments @zupan2025developing.
+
+=== Justification for the Dual-Mode Setup (Standard vs. Domain-Aligned)
+The introduction of the contextually filtered Domain-Aligned Mode alongside the Standard Mode isolates a critical variable:
+
+- *Anomaly vs. Intent Classification*: Naive benchmarks mix mismatched domains (e.g., smart lock commands inside Amazon reviews). While useful for evaluating general multi-tool hijack resistance, it risks training the proxy to act as a simple "anomaly detector" (flagging irrelevant topics) @zhan2024injecagent. 
+- *Contextual Vulnerability Testing*: Evaluating the proxy against the Domain-Aligned split tests its capacity to identify malicious behavior when the attack is hidden within a contextually appropriate instruction (e.g., a bank withdrawal request inside an e-commerce workflow), proving the model's true security capabilities @zhang2025msb.
 
 == Evaluation Framework
 According to the DSR approach, the created artefact must be thoroughly evaluated in accordance with specific, quantifiable standards in order to demonstrate its usefulness. Testing will be limited to the unseen holdout datasets (554 cases for the standard split, or 214 cases for the domain-aligned split) in order to assess the refined Gemma 4 E2B proxy. The evaluation framework is built around three main indicators intended to measure the proxy's operational effectiveness as well as its security resilience.
@@ -343,7 +393,7 @@ According to the DSR approach, the created artefact must be thoroughly evaluated
 
 
 == Summary
-The Design Science Research (DSR) methodology used to build and thoroughly evaluate the secure Small Language Model (SLM) middleware proxy was described in this chapter. This study used a programmatic matrix synthesis to create both a standard dataset of 2,108 poisoned SKILL.md files and a contextually filtered domain-aligned dataset of 828 files. This dual-dataset strategy ensures that the proxy is evaluated against both general out-of-domain hijacks and sophisticated, domain-aligned prompt injections.
+The Design Science Research (DSR) methodology used to build and thoroughly evaluate the secure Small Language Model (SLM) middleware proxy was described in this chapter. This study used a programmatic matrix synthesis to generate 1,054 unique standard attack scenarios and 414 unique domain-aligned attack scenarios, which were evaluated under both Base and Enhanced threat settings to produce a total evaluation corpus of 2,936 test files (2,108 standard and 828 domain-aligned). This dual-dataset strategy ensures that the proxy is evaluated against both general out-of-domain hijacks and sophisticated, domain-aligned prompt injections.
 
 Additionally, the chapter detailed the Supervised Fine-Tuning (SFT) parameters, highlighting the use of 4-bit quantisation and Low-Rank Adaptation (LoRA) on the Gemma 4 E2B model to directly correspond with the severe hardware restrictions of SMEs @unsloth2026finetuning, @unsloth2026gemma4. Lastly, it developed a strong assessment mechanism intended to measure the operational utility of the proxy using Format Integrity, Security Efficacy (ASR-valid), and the Token Compression Ratio.
 
