@@ -362,7 +362,7 @@ After the fine-tuning process is finished, these holdout datasets serve as the l
 == Academic Justifications
 
 === Justification for the Partitioning Ratio (SFT vs. Holdout)
-In machine learning, a standard 80/20 split is typical for large-scale training. However, because our proxy's task is highly focused (parsing a semi-structured `SKILL.md` file, identifying natural language injections, and outputting compressed YAML/Markdown), the training objective is classification- and format-oriented rather than open-ended text generation. 
+In machine learning, a standard 80/20 split is typical for large-scale training. However, because our proxy's task is highly focused (parsing a semi-structured `SKILL.md` file, identifying natural language injections, and outputting compressed YAML/Markdown), the training objective is classification- and format-oriented rather than open-ended text generation.
 
 - *Parameter Efficiency*: Using Parameter-Efficient Fine-Tuning (PEFT/LoRA) on the 2-billion parameter Gemma model, 200 to 500 training examples are more than sufficient to converge the model's weights for targeted classification and extraction @unsloth2026finetuning.
 - *Maximizing Evaluation Rigor*: By allocating a larger-than-normal percentage (about 52%) of the dataset to the Holdout Split, we ensure the security metrics (ASR-valid) are computed over a wider array of unseen attack payloads, strengthening the statistical reliability of the evaluation @zhan2024injecagent.
@@ -376,7 +376,7 @@ To ensure the scientific validity of the experiment, a deterministic split was e
 === Justification for the Dual-Mode Setup (Standard vs. Domain-Aligned)
 The introduction of the contextually filtered Domain-Aligned Mode alongside the Standard Mode isolates a critical variable:
 
-- *Anomaly vs. Intent Classification*: Naive benchmarks mix mismatched domains (e.g., smart lock commands inside Amazon reviews). While useful for evaluating general multi-tool hijack resistance, it risks training the proxy to act as a simple "anomaly detector" (flagging irrelevant topics) @zhan2024injecagent. 
+- *Anomaly vs. Intent Classification*: Naive benchmarks mix mismatched domains (e.g., smart lock commands inside Amazon reviews). While useful for evaluating general multi-tool hijack resistance, it risks training the proxy to act as a simple "anomaly detector" (flagging irrelevant topics) @zhan2024injecagent.
 - *Contextual Vulnerability Testing*: Evaluating the proxy against the Domain-Aligned split tests its capacity to identify malicious behavior when the attack is hidden within a contextually appropriate instruction (e.g., a bank withdrawal request inside an e-commerce workflow), proving the model's true security capabilities @zhang2025msb.
 
 == Evaluation Framework
