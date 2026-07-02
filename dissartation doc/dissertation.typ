@@ -247,32 +247,32 @@ There is currently no publicly accessible archive or dataset of deliberately poi
 
 The work uses a programmatic combinatorics approach to build this dataset, modifying the synthesis matrix created by the INJECAGENT benchmark @zhan2024injecagent. We specifically adapted the static combinatoric structure of the INJECAGENT benchmark @zhan2024injecagent rather than the dynamic interactive structure of AgentDojo @debenedetti2024agentdojo. While AgentDojo is highly suited for evaluating multi-turn, stateful tool interactions, the static cross-multiplication matrix of INJECAGENT maps directly onto the target structure of Agent Skills: a single tool/skill configuration file containing a single target description placeholder. This allows us to systematically evaluate how a local proxy can inspect and parse a skill's metadata and description during the initial progressive disclosure phase, before any tool execution occurs. The dataset is constructed by cross-multiplying two different axes of data, User Cases and Attacker Cases, using two distinct synthesis models:
 - *User Cases (Benign)*: 17 benign, SME-relevant tool instructions, including calendar management, document retrieval, and customer lookups, make up the first axis. Each skill's Markdown body or simulated YAML frontmatter has a placeholder string called `<Attacker Instruction>` that is used as the injection target.
-- *Attacker Cases (Malicious)*: 62 unique malicious payloads that were taken directly from the INJECAGENT dataset @zhan2024injecagent make up the second axis. These payloads, which are strictly classified by their adversarial intent, include 32 "Data Stealing" attacks (which are intended to surreptitiously exfiltrate private databases to attacker-controlled servers) and 30 "Direct Harm" attacks (which are intended to cause unauthorised actions, such as fraudulent financial transactions) @zhan2024injecagent. The broader taxonomy of evaluated attack vectors, integrating classifications from both INJECAGENT and MSB frameworks, is outlined in @tbl-ipi-attack-vectors.
+- *Attacker Cases (Malicious)*: 62 unique malicious payloads that were taken directly from the INJECAGENT dataset @zhan2024injecagent make up the second axis. These payloads, which are strictly classified by their adversarial intent, include 32 "Data Stealing" attacks (which are intended to surreptitiously exfiltrate private databases to attacker-controlled servers) and 30 "Direct Harm" attacks (which are intended to cause unauthorised actions, such as fraudulent financial transactions) @zhan2024injecagent. The broader taxonomy of evaluated attack vectors, integrating classifications from both INJECAGENT and MSB frameworks, is outlined in @tbl-ipi-attack-vectors. Specifically, while the attack payloads themselves (the adversarial actions) are drawn from INJECAGENT's Direct Harm and Data Stealing categories, their delivery vectors within the `SKILL.md` template files (the location of the injection) are structured to evaluate the proxy's resilience against MSB's Tool Signature and Out-of-Scope Parameter manipulation vectors (by hiding payloads in YAML description fields, parameter descriptions, or custom blocks).
 
 The underlying rationale for this cross-multiplication architecture in the original INJECAGENT design is directly rooted in the *confused deputy problem* @zhan2024injecagent. Because modern tool-integrated AI agents are typically granted access to a diverse suite of capabilities, often mixing low-privilege read functions (e.g., retrieving web content or product reviews) with high-privilege write functions (e.g., executing financial transfers, sending emails, or modifying code repositories), they act as deputies carrying out actions on behalf of the user. An attacker can exploit this by embedding malicious commands in external, untrusted read sources, which the agent (the deputy) processes and is subsequently fooled into executing using its authorized write permissions. This cross-tool execution pattern creates a highly realistic and potent attack surface, which the combinatoric matrix is designed to systematically evaluate.
 
 
 #figure(
   table(
-    columns: (1.2fr, 1.2fr, 3fr),
+    columns: (1fr, 1.2fr, 2.8fr),
     stroke: 0.5pt,
     align: left,
-    [*Attack Category*], [*Source Taxonomy*], [*Specific Vectors & Description*],
-    [Direct Harm],
-    [INJECAGENT @zhan2024injecagent],
-    [Tricking the agent into executing unauthorized, real-world actions, such as fraudulent financial transactions or physical environment manipulation.],
+    [*Dimension*], [*Attack Vector & Source*], [*SME Skill Implementation / Simulation*],
+    [Payload ("What")],
+    [Direct Harm \ (INJECAGENT @zhan2024injecagent)],
+    [Tricking the agent into executing unauthorized real-world actions (e.g., executing fraudulent bank transfers, overriding security configs, or command execution).],
 
-    [Data Stealing],
-    [INJECAGENT @zhan2024injecagent],
-    [Covertly extracting private user data (e.g., saved payment methods or medical records) and actively transmitting it to an attacker-controlled email or server.],
+    [Payload ("What")],
+    [Data Stealing \ (INJECAGENT @zhan2024injecagent)],
+    [Covertly extracting private user data (e.g., contact lists, emails, calendar details) and exfiltrating them to an attacker-controlled endpoint.],
 
-    [Tool Signature Attacks],
-    [MSB @zhang2025msb],
-    [Manipulating tool metadata to deceive routing logic. Includes "Name Collision" (mimicking a benign tool's name) and "Preference Manipulation" (injecting promotional text to hijack the agent's tool prioritization).],
+    [Delivery Vector ("Where")],
+    [Tool Signature / Preference Manipulation \ (MSB @zhang2025msb)],
+    [Simulated by embedding malicious payloads directly inside the YAML frontmatter `description` fields of the `SKILL.md` templates (e.g., `AmazonGetProductDetails`), hijacking routing/prioritization logic.],
 
-    [Out-of-Scope Parameters],
-    [MSB @zhang2025msb],
-    [Tricking the agent during the tool invocation stage into disclosing unauthorized parameters or sensitive underlying model configurations.],
+    [Delivery Vector ("Where")],
+    [Out-of-Scope Parameters \ (MSB @zhang2025msb)],
+    [Simulated by embedding payloads inside specific parameter descriptions (e.g., `username` parameter details in `GitHubGetUserDetails`), tricking the agent during parameter binding.],
   ),
   caption: [Taxonomy of Evaluated Indirect Prompt Injection (IPI) Attack Vectors],
 ) <tbl-ipi-attack-vectors>
