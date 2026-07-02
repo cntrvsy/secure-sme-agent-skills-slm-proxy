@@ -55,6 +55,8 @@ def main():
                         help="Which setting to include: base, enhanced, benign, or all.")
     parser.add_argument("--format", choices=["alpaca", "chatml"], default="alpaca",
                         help="Dataset format: alpaca or chatml (ShareGPT).")
+    parser.add_argument("--split", choices=["all", "train", "holdout"], default="all",
+                        help="Which split to compile: all, train, or holdout.")
     parser.add_argument("--output", type=str, default="sft_dataset.jsonl",
                         help="Path to save the compiled JSONL SFT dataset.")
     args = parser.parse_args()
@@ -68,6 +70,7 @@ def main():
     print(f"Compiling SFT dataset...")
     print(f"  Modes: {modes}")
     print(f"  Settings: {settings}")
+    print(f"  Split: {args.split}")
     print(f"  Format: {args.format}")
 
     dataset_rows = []
@@ -82,6 +85,28 @@ def main():
             
             with open(metadata_file, "r") as f:
                 cases = json.load(f)
+            
+            # Apply train/holdout split if requested
+            if args.split != "all":
+                total_cases = len(cases)
+                if total_cases == 1054:
+                    train_size = 500
+                elif total_cases == 414:
+                    train_size = 200
+                elif total_cases == 170:
+                    train_size = 80
+                else:
+                    train_size = int(total_cases * 0.48)
+                
+                all_indices = [c["case_index"] for c in cases]
+                import random
+                random.seed(42)
+                train_indices = set(random.sample(all_indices, train_size))
+                
+                if args.split == "train":
+                    cases = [c for c in cases if c["case_index"] in train_indices]
+                elif args.split == "holdout":
+                    cases = [c for c in cases if c["case_index"] not in train_indices]
             
             for case in cases:
                 user_tool = case["User Tool"]
