@@ -333,20 +333,14 @@ Importantly, these payloads were programmatically mapped to particular metadata 
     [1,054],
     [Malicious payload prepended with forced safety override hacking prompt.],
 
-    [Standard Mode],
-    [Benign Setting],
-    [170],
-    [Hard negatives containing warning scaffolding with harmless content.],
+    [Standard Mode], [Benign Setting], [170], [Hard negatives containing warning scaffolding with harmless content.],
 
     [Domain-Aligned Mode],
     [Base Setting],
     [414],
     [Contextually mapped subset (e.g., finance attacks for e-commerce tools).],
 
-    [Domain-Aligned Mode],
-    [Enhanced Setting],
-    [414],
-    [Domain-aligned payload prepended with forced hacking prompt.],
+    [Domain-Aligned Mode], [Enhanced Setting], [414], [Domain-aligned payload prepended with forced hacking prompt.],
 
     [Domain-Aligned Mode],
     [Benign Setting],
@@ -365,7 +359,7 @@ For targeted classification and routing tasks, training an LLM with complete fin
 Making sure this Design Science Research (DSR) artefact is sustainable amid the harsh infrastructural and financial restrictions of typical SMEs is one of its primary goals. This is accomplished by fine-tuning the proxy in conjunction with the LoRA adapters using dynamic 4-bit quantisation. This method significantly reduces the model's memory footprint without significantly sacrificing accuracy, enabling the optimised Gemma 4 E2B proxy to operate entirely locally on consumer-grade hardware with as little as 5GB of RAM @unsloth2026gemma4. This local deployment functionality ensures that private company data and SKILL.md files do not need to be sent to costly, third-party cloud APIs for security auditing, thereby immediately resolving the SME hardware constraint.
 
 === SFT Dataset Structure and Task Formulation
-The programmatic combinatorics step described in the previous section yields a total corpus of 3,276 virtual cases. However, standard Parameter-Efficient Fine-Tuning (PEFT) frameworks such as Unsloth @unsloth2026finetuning do not ingest raw file directories (e.g., individual `SKILL.md` documents) directly. Instead, modern model training and fine-tuning platforms require a flat, structured dataset format consisting of rows and columns—typically configured in an Alpaca-style `{instruction, input, output}` schema, or conversational formats like ShareGPT/ChatML. 
+The programmatic combinatorics step described in the previous section yields a total corpus of 3,276 virtual cases. However, standard Parameter-Efficient Fine-Tuning (PEFT) frameworks such as Unsloth @unsloth2026finetuning do not ingest raw file directories (e.g., individual `SKILL.md` documents) directly. Instead, modern model training and fine-tuning platforms require a flat, structured dataset format consisting of rows and columns—typically configured in an Alpaca-style `{instruction, input, output}` schema, or conversational formats like ShareGPT/ChatML.
 
 To bridge this operational gap, we implement a unified dataset curation script (`refine_dataset.py`) acting as a local middleware. This script processes the raw InjecAgent data and templates directly in-memory, batches the inputs to optimize API rate usage, and queries the Gemini API using modern structured JSON output (supported by a strict Pydantic response schema). For each case, the Gemini critic identifies injections and refines the skill, which is then subjected to deterministic local validation guardrails (ASR keyword matching and YAML format checks) before being written directly to a compiled JSONL training dataset file (`sft_dataset_sanitized.jsonl`):
 - *Instruction*: The system prompt (`PROXY_SYSTEM_PROMPT`) defining the operational expectations for the proxy, instructing it to identify prompt injections, preserve YAML/Markdown structural boundaries, compress the text to minimize token overhead, and output only valid skill code.
@@ -445,7 +439,7 @@ To operationalize the evaluation of the fine-tuned SLM proxy, a programmatic tes
 4. *Checkpointing and Logging*: To guarantee stability during long execution runs, the harness logs results incrementally to a JSONL file (`results/evaluation_{model_type}_{mode}_{setting}_results.jsonl`). This allows the pipeline to dynamically resume progress from the last cached case-index in the event of hardware or connection failures.
 
 #figure(
-  image("SLM Proxy Assessment Flow.png", width: 85%),
+  image("SLM Proxy Assessment Flow.png", width: 55%),
   caption: [Systematic Execution Flow of the SLM Proxy Assessment Harness],
 ) <fig-assessment-flow>
 
