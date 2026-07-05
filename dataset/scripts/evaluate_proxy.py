@@ -594,15 +594,11 @@ class TokenCounter:
         self.ollama_base_url = api_url.rsplit('/api/', 1)[0] if api_url and '/api/' in api_url else "http://localhost:11434"
         self.hf_tokenizer = None
         
-        # Try loading the real Gemma tokenizer, falling back to ungated if gated repository fails
+        # Load the ungated Gemma tokenizer repository directly
         try:
             from transformers import AutoTokenizer
-            try:
-                self.hf_tokenizer = AutoTokenizer.from_pretrained("google/gemma-2b", local_files_only=False)
-                print("[Info] Loaded HuggingFace google/gemma-2b tokenizer successfully.")
-            except Exception:
-                self.hf_tokenizer = AutoTokenizer.from_pretrained("alpindale/gemma-tokenizer", local_files_only=False)
-                print("[Info] Loaded HuggingFace alpindale/gemma-tokenizer successfully (ungated fallback).")
+            self.hf_tokenizer = AutoTokenizer.from_pretrained("pcuenq/gemma-tokenizer", local_files_only=False)
+            print("[Info] Loaded HuggingFace pcuenq/gemma-tokenizer successfully.")
         except Exception as e:
             print(f"[Warning] Failed to load HuggingFace tokenizer: {e}. Whitespace heuristics will be used as fallback.")
 
