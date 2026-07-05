@@ -598,7 +598,7 @@ def build_inputs(data_dir, modes, settings, split):
             
             # Deterministic Split Step (Maps to 'Deterministic Split' in the diagram):
             # To avoid data leakage between training and evaluation splits, both refine_dataset.py
-            # and scripts/evaluate_proxy.py share this exact splitting code, seeded with random.seed(42).
+            # and evaluate_proxy.py share this exact splitting code, seeded with random.seed(42).
             # This ensures that the holdout split is never seen during the training dataset curation phase.
             if split != "all":
                 total_cases = len(cases)

@@ -34,19 +34,15 @@ To evaluate and prevent **over-refusal** or **false-positives** (where the model
 ```
 .
 ├── .venv/                              # Python virtual environment
-├── README.md                           # Pipeline documentation (this file)
+├── evaluate_proxy.py                   # Runs evaluation suite (in-memory)
 ├── refine_dataset.py                   # Self-contained dataset curation and sanitization script
-├── report.md                           # SFT dataset curation design report
 ├── requirements.txt                    # Python environment requirements
 ├── results/                            # Cached evaluation results (.jsonl)
-├── scripts/                            # Core python scripts
-│   └── evaluate_proxy.py               # Runs evaluation suite (in-memory)
 └── temp_injecagent/                    # InjecAgent source data
     └── data/                           # test_cases_dh_base.json, etc.
 ```
 
 ---
-
 
 ## Dataset Mathematics & Splitting
 
@@ -71,6 +67,7 @@ To prevent **data leakage** and ensure the proxy's zero-shot generalization capa
 ### Step 1: Environment Setup
 
 Ensure the virtual environment is set up and all required packages are installed:
+
 ```bash
 python3 -m venv .venv
 ./.venv/bin/pip install -r requirements.txt
@@ -79,27 +76,31 @@ python3 -m venv .venv
 > [!NOTE]
 > Sourcing `activate` scripts can differ depending on your shell (e.g. `source .venv/bin/activate` for bash/zsh, `source .venv/bin/activate.fish` for fish).
 > To run the scripts reliably in a shell-agnostic way without needing to activate the environment, execute them directly using the virtual environment's Python interpreter:
+>
 > ```bash
 > ./.venv/bin/python refine_dataset.py [arguments]
-> ./.venv/bin/python scripts/evaluate_proxy.py [arguments]
+> ./.venv/bin/python evaluate_proxy.py [arguments]
 > ```
 
 ### Step 2: Curation & Sanitization (Gemini SDK API Call)
 
 Run the unified `refine_dataset.py` script to generate your training splits. Ensure `GEMINI_API_KEY` is exported first.
 
-* **Generate Standard Train Split** (1,080 rows):
+- **Generate Standard Train Split** (1,080 rows):
+
   ```bash
   ./.venv/bin/python refine_dataset.py --mode standard --split train --format alpaca --output sft_dataset_standard_train.jsonl
   ```
 
-* **Generate Domain-Aligned Train Split** (480 rows):
+- **Generate Domain-Aligned Train Split** (480 rows):
+
   ```bash
   ./.venv/bin/python refine_dataset.py --mode domain_aligned --split train --format alpaca --output sft_dataset_domain_aligned_train.jsonl
   ```
 
-* **Generate Combined splits (Training & Holdout)**:
+- **Generate Combined splits (Training & Holdout)**:
   To generate the clean dataset for both training and evaluation separately (highly recommended to prevent data leakage during SFT):
+
   ```bash
   # 1. Generate the training set (1,560 items)
   ./.venv/bin/python refine_dataset.py --mode both --split train --format alpaca --output sft_train.jsonl
@@ -112,7 +113,7 @@ Run the unified `refine_dataset.py` script to generate your training splits. Ens
 
 ## Demystifying the Evaluation Harness
 
-Once your fine-tuned model is running locally (via Ollama or LM Studio), run the evaluation suite to test its performance. The script `scripts/evaluate_proxy.py` serves as the test harness. It operates through the following steps:
+Once your fine-tuned model is running locally (via Ollama or LM Studio), run the evaluation suite to test its performance. The script `evaluate_proxy.py` serves as the test harness. It operates through the following steps:
 
 1. **Loads the Evaluation Target**: Dynamically builds the holdout cases from `temp_injecagent/data` matching the mode and setting.
 2. **Filters to Holdout Cases**: Sets a deterministic seed of `42` and isolates the holdout indices, ensuring only unseen cases are processed.
@@ -128,14 +129,13 @@ To run evaluation on your local fine-tuned model:
 
 - **Evaluate Standard Base Setting** (554 cases):
   ```bash
-  ./.venv/bin/python scripts/evaluate_proxy.py --setting base --model-type ollama --model-name gemma:2b
+  ./.venv/bin/python evaluate_proxy.py --setting base --model-type ollama --model-name gemma:2b
   ```
 - **Evaluate Domain-Aligned Base Setting** (214 cases):
   ```bash
-  ./.venv/bin/python scripts/evaluate_proxy.py --setting base --model-type ollama --model-name gemma:2b --domain-aligned
+  ./.venv/bin/python evaluate_proxy.py --setting base --model-type ollama --model-name gemma:2b --domain-aligned
   ```
 - **Evaluate Benign Hard Negatives** (90 cases):
   ```bash
-  ./.venv/bin/python scripts/evaluate_proxy.py --setting benign --model-type ollama --model-name gemma:2b
+  ./.venv/bin/python evaluate_proxy.py --setting benign --model-type ollama --model-name gemma:2b
   ```
-

@@ -77,7 +77,7 @@ ATTACKER_CATEGORIES = {
     'FedExShipManagerSearchShipment': 'ecommerce',
     'FedExShipManagerManageShipment ': 'ecommerce',
     'FedExShipManagerSearchShipment ': 'ecommerce',
-
+ 
     'GmailSendEmail': 'comm',
     'SlackLeaveChannel': 'comm',
     'TwilioGetPhoneNumberInfo': 'comm',
@@ -833,7 +833,7 @@ class GeminiProxyModel:
             from dotenv import load_dotenv
             
             # Load environment variables
-            script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            script_dir = os.path.dirname(os.path.abspath(__file__))
             load_dotenv(os.path.join(script_dir, ".env"))
             load_dotenv(os.path.join(script_dir, "example.env"))
             
@@ -886,8 +886,7 @@ def run_evaluation(setting, model_type, domain_aligned, sample_size=None, prompt
     print("=" * 60)
 
     # Robust path resolution for InjecAgent data files
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    dataset_dir = os.path.dirname(script_dir)
+    dataset_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(dataset_dir, "temp_injecagent/data")
 
     # Generate evaluation split deterministically in memory
