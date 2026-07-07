@@ -402,7 +402,11 @@ In machine learning, a standard 80/20 split is typical for large-scale training.
 === Justification for the Deterministic Split (Fixed Seed = 42)
 To ensure the scientific validity of the experiment, a deterministic split was enforced using a fixed random seed of 42.
 
-- *Prevention of Data Leakage*: In zero-shot evaluation, it is critical that the model is never tested on payloads it observed during training @gulyamov2026prompt. The deterministic split guarantees that the holdout set consists entirely of unseen attacker instructions.
+- *Prevention of Data Leakage (Zero Sample Leakage)*: In zero-shot evaluation, it is critical that the model is never tested on payloads it observed during training @gulyamov2026prompt. By partitioning indices directly (ensuring a specific case index is placed in either the training split or the holdout split, but never both), we guarantee zero sample leakage.
+- *Structural Repetition vs. Payload Generalisation*: Because the dataset is synthesized from a fixed set of 17 base skill templates (such as `AmazonGetProductDetails` or `GmailReadEmail`), there is inherent structural repetition in the templates. However, the attacker instructions (the malicious payloads injected) and their specific tool combinations are unique to each case. Consequently:
+  - *SFT Training*: The model learns how to recognize prompt injection patterns generally and how to sanitize/distill the template structure.
+  - *Holdout Evaluation*: The model is evaluated on completely unseen attacker instructions (adversarial payloads) injected into those templates.
+  This partition design is standard and acceptable in security benchmarks like InjecAgent @zhan2024injecagent. The primary objective is to test if a model can generalize its safety boundary to new, unseen attack instructions (out-of-distribution payloads) rather than new tool definitions.
 - *Scientific Reproducibility*: Under the Design Science Research (DSR) paradigm, any independent researcher must be able to reproduce the exact SFT training adapters and evaluation runs. Enforcing a fixed seed ensures that the dataset partitions remain identical across different execution environments @zupan2025developing.
 
 === Justification for the Dual-Mode Setup (Standard vs. Domain-Aligned)
