@@ -111,6 +111,34 @@ Run the unified `refine_dataset.py` script to generate your training splits. Ens
 
 ---
 
+## Model Fine-Tuning (AMD GPU Support via Unsloth)
+
+To fine-tune the defensive proxy model on an AMD GPU system, we have created a modular, production-ready training script: `Gemma4_E2B_SKILLmd_Sanitizer_Finetune.py`.
+
+This script is configured specifically for AMD hardware using ROCm-optimized PyTorch and features an optimized memory-efficient exit sequence to prevent Out-Of-Memory (OOM) errors during weight-merging and GGUF export.
+
+### 1. Configuration (`.env`)
+The script automatically reads parameters and defaults from your local `.env` file (e.g. `HF_TOKEN`, `MODEL_NAME`, `MAX_STEPS`, etc.). Make sure you copy options from `example.env` and configure your Hugging Face access token:
+```env
+# Append your Hugging Face token to enable high-speed downloads
+HF_TOKEN=hf_your_token_here
+```
+
+### 2. Execution Commands
+To run the script from anywhere, execute it directly using the custom Unsloth virtual environment interpreter:
+
+- **Trial Run (Dry-run for 5 steps)**:
+  ```bash
+  /home/cntrvsy/.gemini/antigravity/scratch/unsloth-setup/.venv/bin/python Gemma4_E2B_SKILLmd_Sanitizer_Finetune.py --max-steps 5
+  ```
+
+- **Full Training Run (500 steps)**:
+  ```bash
+  /home/cntrvsy/.gemini/antigravity/scratch/unsloth-setup/.venv/bin/python Gemma4_E2B_SKILLmd_Sanitizer_Finetune.py
+  ```
+
+---
+
 ## Demystifying the Evaluation Harness
 
 Once your fine-tuned model is running locally (via Ollama or LM Studio), run the evaluation suite to test its performance. The script `evaluate_proxy.py` serves as the test harness. It operates through the following steps:
