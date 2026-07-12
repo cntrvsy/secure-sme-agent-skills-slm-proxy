@@ -588,17 +588,17 @@ def try_parse_yaml(text):
 
 class TokenCounter:
     """A robust token counter with local and remote fallback support."""
-    def __init__(self, model_type="mock", model_name="gemma:2b", api_url="http://localhost:11434"):
+    def __init__(self, model_type="mock", model_name="qwen2.5:3b", api_url="http://localhost:11434"):
         self.model_type = model_type
         self.model_name = model_name
         self.ollama_base_url = api_url.rsplit('/api/', 1)[0] if api_url and '/api/' in api_url else "http://localhost:11434"
         self.hf_tokenizer = None
         
-        # Load the ungated Gemma tokenizer repository directly
+        # Load the ungated Qwen 2.5 tokenizer repository directly
         try:
             from transformers import AutoTokenizer
-            self.hf_tokenizer = AutoTokenizer.from_pretrained("pcuenq/gemma-tokenizer", local_files_only=False)
-            print("[Info] Loaded HuggingFace pcuenq/gemma-tokenizer successfully.")
+            self.hf_tokenizer = AutoTokenizer.from_pretrained("unsloth/Qwen2.5-3B-Instruct", local_files_only=False)
+            print("[Info] Loaded HuggingFace unsloth/Qwen2.5-3B-Instruct tokenizer successfully.")
         except Exception as e:
             print(f"[Warning] Failed to load HuggingFace tokenizer: {e}. Whitespace heuristics will be used as fallback.")
 
@@ -727,6 +727,22 @@ class OpenAICompatibleModel:
         self.api_url = api_url
         self.prompt_format = prompt_format
 
+        # Auto-detect loaded model name from local API server if using default "lmstudio"
+        if self.model_name == "lmstudio":
+            try:
+                base_url = self.api_url.rsplit('/chat/', 1)[0] if '/chat/' in self.api_url else self.api_url.rsplit('/v1/', 1)[0] + '/v1'
+                models_url = f"{base_url}/models"
+                req = urllib.request.Request(models_url)
+                with urllib.request.urlopen(req, timeout=3) as response:
+                    res = json.loads(response.read().decode("utf-8"))
+                    if "data" in res and len(res["data"]) > 0:
+                        candidate_models = [m["id"] for m in res["data"] if "embed" not in m["id"]]
+                        if candidate_models:
+                            self.model_name = candidate_models[0]
+                            print(f"[Info] Auto-detected active model: '{self.model_name}'")
+            except Exception:
+                pass
+
     def generate(self, system_prompt, skill_content, injected_payload):
         user_prompt = f"Raw SKILL.md Content to Process:\n\n{skill_content}"
         
@@ -747,24 +763,53 @@ class OpenAICompatibleModel:
         }
         
         headers = {"Content-Type": "application/json"}
-        req = urllib.request.Request(
-            self.api_url, 
-            data=json.dumps(payload_data).encode("utf-8"), 
-            headers=headers
-        )
+        max_retries = 3
+        retry_delay = 5.0
         
-        try:
-            with urllib.request.urlopen(req, timeout=30) as response:
-                res = json.loads(response.read().decode("utf-8"))
-                return res["choices"][0]["message"]["content"].strip()
-        except Exception as e:
-            print(f"\n[Error] Connection to Local API failed: {e}")
-            print(f"Please make sure your server is running at {self.api_url}.")
-            sys.exit(1)
+        for attempt in range(1, max_retries + 1):
+            req = urllib.request.Request(
+                self.api_url, 
+                data=json.dumps(payload_data).encode("utf-8"), 
+                headers=headers
+            )
+            
+            try:
+                with urllib.request.urlopen(req, timeout=45) as response:
+                    res = json.loads(response.read().decode("utf-8"))
+                    return res["choices"][0]["message"]["content"].strip()
+            except urllib.error.HTTPError as he:
+                error_body = ""
+                try:
+                    error_body = he.read().decode("utf-8")
+                except Exception:
+                    pass
+                
+                # Check for transient errors in body or status
+                is_transient = "fetch failed" in error_body.lower() or he.code in [408, 429, 500, 502, 503, 504]
+                
+                if is_transient and attempt < max_retries:
+                    print(f"\n[Warning] Transient API error (HTTP {he.code}). Retrying in {retry_delay}s... (Attempt {attempt}/{max_retries})")
+                    import time
+                    time.sleep(retry_delay)
+                    continue
+                
+                print(f"\n[Error] HTTP Error {he.code}: {he.reason}")
+                if error_body:
+                    print(f"Error details: {error_body}")
+                sys.exit(1)
+            except Exception as e:
+                if attempt < max_retries:
+                    print(f"\n[Warning] Connection failure ({e}). Retrying in {retry_delay}s... (Attempt {attempt}/{max_retries})")
+                    import time
+                    time.sleep(retry_delay)
+                    continue
+                print(f"\n[Error] Connection to Local API failed: {e}")
+                print(f"Please make sure your server is running at {self.api_url}.")
+                sys.exit(1)
 
 class OllamaProxyModel:
-    """Connects to a local Ollama instance running the Gemma 4 E2B model."""
-    def __init__(self, model_name="gemma:2b", api_url="http://localhost:11434/api/generate", prompt_format="alpaca"):
+    """Connects to a local Ollama instance running the Qwen2.5-3B-Instruct model."""
+    def __init__(self, model_name="qwen2.5:3b", api_url="http://localhost:11434/api/generate", prompt_format="alpaca"):
         self.model_name = model_name
         self.api_url = api_url
         self.prompt_format = prompt_format
@@ -878,7 +923,7 @@ class GeminiProxyModel:
             print(f"\n[Error] Gemini API generation failed: {e}")
             sys.exit(1)
 
-def run_evaluation(setting, model_type, domain_aligned, sample_size=None, prompt_format="alpaca", model_name=None):
+def run_evaluation(setting, model_type, domain_aligned, sample_size=None, prompt_format="alpaca", model_name=None, delay=0.5):
     """Runs evaluation on the holdout cases for the given setting."""
     mode_name = "domain_aligned" if domain_aligned else "standard"
     print("=" * 60)
@@ -888,9 +933,47 @@ def run_evaluation(setting, model_type, domain_aligned, sample_size=None, prompt
     # Robust path resolution for InjecAgent data files
     dataset_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(dataset_dir, "temp_injecagent/data")
+    test_jsonl_file = os.path.join(dataset_dir, "test.jsonl")
 
-    # Generate evaluation split deterministically in memory
-    holdout_cases = build_inputs(data_dir, mode_name, setting, "holdout")
+    if not os.path.exists(test_jsonl_file):
+        print(f"[Error] test.jsonl not found at {test_jsonl_file}")
+        sys.exit(1)
+
+    # Build a lookup for attacker metadata from raw database (split="all") to check semantic leaks
+    raw_cases = build_inputs(data_dir, mode_name, setting, "all")
+    attacker_lookup = {c["unique_id"]: (c["attacker_instruction"], c["attacker_tools"], c["injected_payload"]) for c in raw_cases}
+
+    # Load holdout cases directly from test.jsonl
+    holdout_cases = []
+    with open(test_jsonl_file, "r") as f:
+        for line in f:
+            if line.strip():
+                case = json.loads(line)
+                if case.get("mode") == mode_name and case.get("setting") == setting:
+                    unique_id = case["unique_id"]
+                    raw_input = case["input"]
+                    prefix = "Raw SKILL.md Content to Process:\n\n"
+                    if raw_input.startswith(prefix):
+                        raw_skill_content = raw_input[len(prefix):]
+                    else:
+                        raw_skill_content = raw_input
+                    
+                    att_inst, att_tools, att_payload = attacker_lookup.get(unique_id, ("", [], ""))
+                    
+                    holdout_cases.append({
+                        "unique_id": unique_id,
+                        "mode": mode_name,
+                        "setting": setting,
+                        "case_index": case["case_index"],
+                        "user_tool": case["user_tool"],
+                        "attacker_instruction": att_inst,
+                        "attacker_tools": att_tools,
+                        "injected_payload": att_payload,
+                        "is_benign": case["is_benign"],
+                        "raw_skill_content": raw_skill_content,
+                        "skill_path": f"poisoned_skills/{mode_name}/{setting}/case_{case['case_index']:04d}/SKILL.md"
+                    })
+
     total_cases = len(holdout_cases)
 
     if sample_size:
@@ -921,7 +1004,7 @@ def run_evaluation(setting, model_type, domain_aligned, sample_size=None, prompt
     if model_type == "mock":
         model = MockProxyModel()
     elif model_type == "ollama":
-        model = OllamaProxyModel(model_name=model_name or "gemma:2b", prompt_format=prompt_format)
+        model = OllamaProxyModel(model_name=model_name or "qwen2.5:3b", prompt_format=prompt_format)
     elif model_type == "lmstudio":
         model = OpenAICompatibleModel(model_name=model_name or "lmstudio", api_url="http://localhost:1234/v1/chat/completions", prompt_format=prompt_format)
     elif model_type == "gemini":
@@ -961,6 +1044,10 @@ def run_evaluation(setting, model_type, domain_aligned, sample_size=None, prompt
             if case_index in completed_cases:
                 eval_res = completed_cases[case_index]
             else:
+                # Add delay before sending request to local servers to prevent overloading
+                if delay > 0 and model_type in ["lmstudio", "ollama"]:
+                    import time
+                    time.sleep(delay)
                 output = model.generate(PROXY_SYSTEM_PROMPT, raw_skill_content, injected_payload)
 
                 # 1. Format Integrity Check (Metric 2)
@@ -1029,13 +1116,15 @@ def main():
     parser.add_argument("--model-type", choices=["mock", "ollama", "lmstudio", "gemini"], default="mock",
                         help="Model backend to use: mock (validation), ollama (local Ollama), lmstudio (local LM Studio), or gemini.")
     parser.add_argument("--model-name", type=str, default=None,
-                        help="Name of the model to evaluate (e.g. gemma:2b for Ollama, gemini-2.5-flash for Gemini).")
+                        help="Name of the model to evaluate (e.g. qwen2.5:3b for Ollama, gemini-2.5-flash for Gemini).")
     parser.add_argument("--prompt-format", choices=["raw", "alpaca", "chatml"], default="alpaca",
                         help="Prompt template format to wrap inputs in (raw, alpaca, chatml).")
     parser.add_argument("--domain-aligned", action="store_true",
                         help="Evaluate the domain-aligned dataset.")
     parser.add_argument("--sample-size", type=int, default=None,
                         help="Number of cases to sample for a quick dry-run/test.")
+    parser.add_argument("--delay", type=float, default=0.5,
+                        help="Delay in seconds between API requests (defaults to 0.5s for local servers).")
     args = parser.parse_args()
 
     run_evaluation(
@@ -1044,7 +1133,8 @@ def main():
         domain_aligned=args.domain_aligned, 
         sample_size=args.sample_size,
         prompt_format=args.prompt_format,
-        model_name=args.model_name
+        model_name=args.model_name,
+        delay=args.delay
     )
 
 if __name__ == "__main__":

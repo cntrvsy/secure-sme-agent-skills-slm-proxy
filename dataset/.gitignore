@@ -146,15 +146,14 @@ cython_debug/
 .vscode/
 
 # Local/custom folders
-results/
+
 temp_injecagent/
 
 # Fine-tuning training outputs and artifacts
 outputs/
 unsloth_compiled_cache/
-gemma4_e2b_skillmd_sanitizer_lora/
-gemma4_e2b_skillmd_sanitizer_lora.zip
-gemma4_e2b_skillmd_sanitizer_merged/
-gemma4_e2b_skillmd_sanitizer_gguf/
+qwen2_5_3b_skillmd_sanitizer_gguf/
+qwen2_5_3b_skillmd_sanitizer_gguf_gguf/
+qwen2_5_3b_skillmd_sanitizer_lora/
 *.gguf
 *.zip
