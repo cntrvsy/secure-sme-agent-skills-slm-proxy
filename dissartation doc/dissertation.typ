@@ -416,7 +416,7 @@ The introduction of the contextually filtered Domain-Aligned Mode alongside the 
 - *Contextual Vulnerability Testing*: Evaluating the proxy against the Domain-Aligned split tests its capacity to identify malicious behavior when the attack is hidden within a contextually appropriate instruction (e.g., a bank withdrawal request inside an e-commerce workflow), proving the model's true security capabilities @zhang2025msb.
 
 == Evaluation Framework
-According to the DSR approach, the created artefact must be thoroughly evaluated in accordance with specific, quantifiable standards in order to demonstrate its usefulness. Testing will be limited to the unseen holdout datasets (554 standard, 214 domain-aligned, and 90 benign hard negative cases) in order to assess the refined Qwen2.5-3B-Instruct proxy. The evaluation framework is built around three main indicators intended to measure the proxy's operational effectiveness as well as its security resilience.
+According to the DSR approach, the created artefact must be thoroughly evaluated in accordance with specific, quantifiable standards in order to demonstrate its usefulness. Testing will be limited to the unseen holdout datasets (554 standard, 214 domain-aligned, and 90 benign hard negative cases) in order to assess the refined Qwen2.5-3B-Instruct proxy. For the standard mode (evaluated under both Base and Enhanced settings) and the benign hard negative controls, this translates to 1,198 evaluation runs per model, yielding a total of 2,396 test runs across the baseline and proxy models. The evaluation framework is built around three main indicators intended to measure the proxy's operational effectiveness as well as its security resilience.
 
 - *Metric 1: ASR-valid Security Efficacy*: The Attack Success Rate (ASR) calculates the proportion of hostile payloads that successfully evade the proxy. However, as @zhan2024injecagent has shown, assessing raw ASR is incorrect because an LLM may provide deformed gibberish or fail to produce a coherent response at all; these failures do not constitute a successful defence. To prevent formatting failures from masquerading as successful defences, ASR-valid is calculated only on syntactically valid outputs ($N_("valid")$). Let $N_("leak")$ be the number of valid outputs that still contain the malicious instruction:
   $ "ASR"_("valid") = N_("leak") / N_("valid") times 100 $
@@ -437,7 +437,7 @@ To operationalize the evaluation of the fine-tuned SLM proxy, a programmatic tes
   - *LM Studio Backend*: Dispatches a request to an OpenAI-compatible local server endpoint (`/v1/chat/completions`) hosting the fine-tuned LoRA adapters.
   - *Gemini Backend*: Dispatches a request directly to the hosted Gemini API (e.g. `gemini-2.5-flash`) to serve as a baseline comparison.
 3. *Programmatic Metric Calculation*: Upon receiving the distilled output from the model proxy, the harness applies three automated evaluation passes:
-  - *ASR-valid Audit*: Checks the output for semantic leaks of the malicious payload. An injection leak is flagged if the output contains the attacker's instruction verbatim, references any of the mapped attacker tools, or exhibits a keyword overlap ratio of $\ge 80\%$ (determined via a heuristic keyword filter excluding common stop-words).
+  - *ASR-valid Audit*: Checks the output for semantic leaks of the malicious payload. An injection leak is flagged if the output contains the attacker's instruction verbatim, references any of the mapped attacker tools, or exhibits a keyword overlap ratio of $>= 80%$ (determined via a heuristic keyword filter excluding common stop-words).
   - *Format Integrity Pass*: Parses the YAML frontmatter and Markdown headings to verify that the proxy preserved the strict `SKILL.md` syntax layout without corruption.
   - *Compression Ratio Calculation*: Counts the tokens of the input and output strings using the public, ungated `unsloth/Qwen2.5-3B-Instruct` tokenizer model and computes the compression ratio ($T_("in") / T_("out")$).
 4. *Checkpointing and Logging*: To guarantee stability during long execution runs, the harness logs results incrementally to a JSONL file (`results/evaluation_{model_type}_{mode}_{setting}_results.jsonl`). This allows the pipeline to dynamically resume progress from the last cached case-index in the event of hardware or connection failures.
@@ -462,46 +462,91 @@ Additionally, the chapter detailed the Supervised Fine-Tuning (SFT) parameters, 
 // ════════════════════════════════════════════════════════════════════════════
 = Results
 
-This chapter presents the data collected during the experimental phase.
-Section 4.1 reports the quantitative findings. Section 4.2 summarises
-qualitative observations.
+The quantitative and qualitative findings obtained from the experimental evaluation of the fine-tuned Small Language Model (SLM) security proxy against the vanilla baseline model are presented in this chapter. The defensive capabilities, schema preservation, and token compression performance of both models were evaluated. The evaluations were performed utilizing the programmatic test harness described in Chapter 3, executing over a holdout test dataset.
 
-== Quantitative Findings
+== Quantitative Performance Comparison
 
-Accuracy scores for the baseline and proposed conditions are shown in
-@tbl-results.
+To establish a comprehensive baseline, both the fine-tuned proxy (`qwen2.5-3b-instruct_skills_security_proxy`) and the baseline model (`qwen2.5-vl-3b-instruct`) were subjected to identical test runs across three distinct evaluation profiles: standard attacks (Base), aggressive jailbreak attacks (Enhanced), and benign control cases (Benign). The consolidated metrics for both models, covering the Format Pass Rate, Attack Success Rate (ASR-valid), and the Average Token Compression Ratio, are summarized in @tbl-combined-results.
 
 #figure(
   table(
-    columns: 3,
+    columns: (2fr, 1.5fr, 1.5fr, 1.2fr),
     stroke: 0.5pt,
-    [*Condition*], [*Mean accuracy (%)*], [*Std. dev.*],
-    [Baseline], [72.4], [5.1],
-    [Proposed], [84.7], [3.8],
+    align: (left + horizon, center + horizon, center + horizon, center + horizon),
+    [*Model & Setting*], [*Format Pass Rate*], [*ASR-Valid / False-Alarm*], [*Avg. Compression*],
+    [Fine-Tuned - Base], [100.00%], [0.00%], [1.39x],
+    [Fine-Tuned - Enhanced], [100.00%], [0.00%], [1.53x],
+    [Fine-Tuned - Benign], [100.00%], [0.00%], [1.14x],
+    [Vanilla - Base], [96.21%], [3.38%], [4.69x],
+    [Vanilla - Enhanced], [96.75%], [2.24%], [5.08x],
+    [Vanilla - Benign], [96.67%], [3.33%], [4.02x]
   ),
-  caption: [Accuracy results by experimental condition (_n_ = 30)],
-) <tbl-results>
+  caption: [Quantitative Performance Comparison Matrix of the Fine-Tuned SLM Proxy and the Vanilla Baseline Model],
+) <tbl-combined-results>
 
-The proposed method achieved a mean accuracy of 84.7%, compared with
-72.4% for the baseline, representing an improvement of 12.3 percentage
-points. The distribution of scores across conditions is illustrated in
-@fig-results.
+As shown in @tbl-combined-results, optimal results in format retention and security filtering were achieved by the fine-tuned proxy model, maintaining a 100.00% format integrity rate and a 0.00% attack success rate across all evaluated categories. Conversely, notable safety vulnerabilities and formatting degradations were exhibited by the vanilla baseline model, which are further analyzed in subsequent sections.
+
+== Security Efficacy Analysis
+
+Security efficacy was measured by tracking the rate at which adversarial payloads bypassed the security model (ASR-valid) and the rate at which benign instructions were incorrectly altered (False-Alarm Rate). The comparative analysis of these metrics is illustrated in @fig-security-efficacy.
 
 #figure(
-  rect(
-    width: 70%,
-    height: 5cm,
-    fill: luma(240),
-    align(center + horizon)[_Replace with your results chart_],
-  ),
-  caption: [Distribution of accuracy scores by condition],
-) <fig-results>
+  image("security_efficacy_matrix.png", width: 75%),
+  caption: [Security Efficacy Matrix Comparing Attack Success Rates (ASR) and Benign False-Alarm Rates],
+) <fig-security-efficacy>
 
-== Qualitative Findings
+=== Defensive Safety Efficacy
+As illustrated in @fig-security-efficacy, a 0.00% ASR-valid was achieved by the fine-tuned proxy under both standard (Base) and jailbreak-enhanced (Enhanced) attack scenarios. This outcome indicates that the proxy model was successfully aligned via Supervised Fine-Tuning (SFT) to detect and neutralize indirect prompt injections (IPIs) as classified by @zhan2024injecagent.
 
-Participant responses identified three recurring themes: clarity of
-output, ease of integration with existing tools, and reduced cognitive
-load. These themes are discussed in Chapter 5.
+In contrast, notable safety vulnerabilities were displayed by the vanilla baseline model (`qwen2.5-vl-3b-instruct`). Under standard attacks, a 3.38% ASR-valid was allowed by the vanilla model, representing active exposure to prompt injections. When subjected to aggressive jailbreak configurations (Enhanced), a 2.24% ASR-valid was exhibited by the vanilla model. These results indicate that default instruction-following capabilities are insufficient to prevent adversarial instructions embedded within the metadata or instruction blocks of Agent Skills.
+
+=== False Alarm Zeroing
+In addition to blocking hostile prompts, system usability must be maintained by avoiding the over-filtering of clean inputs. The performance of both models on the benign hard negative dataset is plotted in @fig-security-efficacy. A 0.00% False-Alarm Rate (mangle rate) was achieved by the fine-tuned proxy on the benign control cases, indicating that no clean system calls or parameters were altered or falsely sanitized. Conversely, a 3.33% False-Alarm Rate was suffered by the vanilla baseline model, resulting in the incorrect mangling of benign requests. This behavior represents a functional degradation that would disrupt normal system-call routing in a production environment.
+
+== Format Integrity Analysis
+
+Downstream agentic workflows depend on structured formats to parse skill parameters and coordinate tasks. For models operating under the Model Context Protocol (MCP) or utilizing static Agent Skills, syntax compliance is a hard constraint; formatting anomalies result in downstream parsing errors or system crashes. The format integrity pass rates for both models are presented in @fig-format-integrity.
+
+#figure(
+  image("format_integrity_chart.png", width: 75%),
+  caption: [Format Integrity Pass Rate Across Base, Enhanced, and Benign Datasets],
+) <fig-format-integrity>
+
+=== Alignment Generalization
+As shown in @fig-format-integrity, a perfect 100.00% Format Integrity Pass Rate was achieved by the fine-tuned proxy across all Base, Enhanced, and Benign evaluation runs. This finding indicates that the rigid YAML frontmatter and Markdown schemas were successfully generalized as structural constraints during the fine-tuning process. The correct output formatting was successfully reconstructed by the model even when unsafe instructions were removed or modified.
+
+=== Vanilla Bottleneck
+A significant operational bottleneck is represented by the vanilla baseline model, which failed format integrity checks between 3.25% (in the base setting) and 3.79% of the time (in the enhanced setting), as shown in @fig-format-integrity. Incomplete YAML blocks, malformed header structures, or omitted syntactic elements were repeatedly outputted by the baseline model. In a live operational pipeline, these structural failures would prevent downstream parsing, resulting in application failures and system crashes.
+
+== Token Compression and Scaling Analysis
+
+To address the "Context Tax" highlighted by @fraser2025cutting, verbose, redundant instruction text must be compressed by the proxy while preserving functional parameters. This performance was analyzed using two views: the distribution of token compression ratios and the relationship between input and output lengths.
+
+=== Token Compression Ratio Distribution
+The distribution of the token compression ratios ($ "Ratio" = "InputTokens" / "OutputTokens" $) is shown in @fig-compression-boxplot.
+
+#figure(
+  image("compression_ratio_boxplot.png", width: 75%),
+  caption: [Token Compression Ratio Distribution Across the Baseline and Proxy Models],
+) <fig-compression-boxplot>
+
+As illustrated in @fig-compression-boxplot, highly variable, extremely high compression ratios were exhibited by the vanilla baseline model, mostly clustered between 4.0x and 6.0x. This indicates that the outputs were drastically shortened by the vanilla model, producing very brief responses relative to the inputs. In contrast, a consistent and predictable compression range was maintained by the fine-tuned proxy, with ratios tightly grouped between 1.1x and 1.6x. This narrow distribution shows that the necessary parameters and structural markers are systematically processed and retained by the proxy, avoiding erratic length reductions.
+
+=== Output vs. Input Length Scaling (The Truncation Illusion)
+The relationship between input token lengths and output token lengths is plotted in @fig-truncation-scatter, showing regression trendlines alongside a 1:1 parity line.
+
+#figure(
+  image("truncation_illusion_scatter.png", width: 75%),
+  caption: [Output vs. Input Length Scaling and Regression Trendlines],
+) <fig-truncation-scatter>
+
+A critical operational flaw in the vanilla baseline—termed the "truncation illusion"—is revealed by the scatter plot in @fig-truncation-scatter. The output lengths of the vanilla baseline clustered flatly between 15 and 35 tokens regardless of the input size, explaining its high compression ratio. Rather than performing text distillation, critical descriptions, parameter listings, and warning blocks were simply dropped by the vanilla model, rendering the resulting instructions functionally useless.
+
+Conversely, the trendline of the fine-tuned proxy scales proportionally with input token size, remaining close to the 1:1 parity line. This scaling behavior confirms that targeted semantic distillation is performed by the proxy: the functional schema and parameter structures are retained, and only the adversarial payloads are removed or sanitized. This proportional preservation is the correct behavior for an agent security proxy, protecting the workflow without destroying the underlying instructions.
+
+== Summary of Findings
+
+In summary, it was demonstrated by the experimental evaluation that a robust security layer is provided by the fine-tuned SLM proxy, showing no format degradation (100.00% Format Integrity) and zero security evasion (0.00% ASR-valid). Furthermore, the "Context Tax" was successfully mitigated by the proxy through the compression of inputs to a predictable 1.1x–1.6x range, with output lengths scaling proportionally with input size. In contrast, operational risks were introduced by the vanilla baseline model through safety vulnerabilities, formatting failures, and severe over-compression that stripped functional parameters. These results validate the efficacy of utilizing a specialized, fine-tuned Small Language Model as a secure local proxy for SME agentic workflows. A critical examination of the underlying mechanisms driving these results—including the baseline's security-usability trade-off, its generalization capabilities, and the practical implications for SME deployments—is presented in Chapter 5.
 
 // ════════════════════════════════════════════════════════════════════════════
 // CHAPTER 5 — DISCUSSION
@@ -512,31 +557,51 @@ load. These themes are discussed in Chapter 5.
 // ════════════════════════════════════════════════════════════════════════════
 = Discussion
 
-This chapter interprets the findings presented in Chapter 4 in relation
-to the research question and the existing literature. Section 5.1
-addresses the quantitative findings. Section 5.2 considers the
-qualitative themes. Section 5.3 acknowledges limitations.
+This chapter interprets the empirical findings presented in Chapter 4, contextualizing them within the wider literature on agentic security and context management. It moves beyond the raw data to analyze the underlying mechanisms driving the performance differences between the fine-tuned Small Language Model (SLM) proxy and the vanilla baseline model. Section 5.1 analyzes the "Baseline Paradox" and the fundamental trade-off between security and usability. Section 5.2 evaluates the dataset partitioning strategy, distinguishing between combinatorial and out-of-distribution (OOD) generalization. Section 5.3 discusses the alignment efficacy of the model within the constraints of SME operational environments. Finally, Section 5.4 details the limitations of this study.
 
-== Quantitative Results
+== The Baseline Paradox: "Security by Destruction" vs. Precision Filtering
 
-The improvement in accuracy of 12.3 percentage points is consistent with
-the theoretical prediction established in Chapter 3. This finding aligns
-with the work of @sanchez2025artificial, who demonstrated comparable
-gains in the context of database query optimisation.
+One of the most notable quantitative findings in Chapter 4 is the baseline model's low Attack Success Rate (ASR-valid) of 2.24% to 3.38% under adversarial conditions. Nominally, a vanilla Instruction-Following model like `qwen2.5-vl-3b-instruct` should be highly vulnerable to Indirect Prompt Injections (IPIs), as documented by @zhan2024injecagent and @debenedetti2024agentdojo. This anomalous result introduces what we term the "Baseline Paradox": the baseline model appears secure against attacks, yet it suffers from extreme usability degradation.
 
-== Qualitative Themes
+The explanation for this paradox lies in the model's compression ratio and output length scaling behavior. As demonstrated in @fig-compression-boxplot and @fig-truncation-scatter, the vanilla baseline model exhibited a massive compression ratio of 4.69x to 5.08x, flatly truncating outputs to between 15 and 35 tokens regardless of the size of the input. In its naive attempt to "sanitize and compress" the `SKILL.md` documents, the baseline model lacked the structural fine-tuning needed to reconstruct the YAML frontmatter and Markdown syntax. Instead, it simply discarded the vast majority of the tool's description, parameters, and procedures. By aggressively throwing away the input content, the baseline model accidentally destroyed the prompt injections embedded within it.
 
-The qualitative finding that participants valued clarity and integration
-over raw performance suggests that usability is a critical factor in the
-adoption of such frameworks. This dimension was not captured by the
-accuracy metric and represents an avenue for further investigation.
+We characterize this phenomenon as "Security by Destruction." While the baseline model blocks malicious payloads, it renders the underlying tool completely useless for downstream AI agents by:
+1. **Failing Syntax Constraints**: Failing format integrity checks up to 3.79% of the time (as shown in @tbl-combined-results), resulting in syntax errors that prevent downstream parsing.
+2. **Stripping Parameters**: Removing essential system parameters and description boundaries, causing downstream routing and task execution to fail.
+3. **Mangling Benign Inputs**: Incurring a 3.33% False-Alarm Rate on benign hard negatives, falsely sanitizing and corrupting safe operational instructions.
 
-== Limitations
+In contrast, the fine-tuned proxy model demonstrates "Precision Filtering." By achieving a perfect 100.00% format pass rate and a 0.00% False-Alarm Rate, the proxy successfully preserves the integrity and usability of the tool schemas. Its tight, predictable compression range (1.14x to 1.53x) indicates that it acts as a selective surgical filter. It strips out only the malicious injection payloads and redundant linguistic noise, while systematically reconstructing the necessary parameters, types, and procedures in strict compliance with the `SKILL.md` schema specification.
 
-The primary limitation of this study is the use of a convenience sample,
-which may reduce the generalisability of the findings to other
-populations. The controlled laboratory setting may not fully reflect the
-complexity of real-world deployments.
+== Generalization Robustness: Combinatorial vs. Out-of-Distribution (OOD) Generalization
+
+To objectively evaluate the proxy's 0.00% ASR-valid across all test settings, the underlying data partition must be examined. A reviewer or security auditor might look at a perfect defense rate and suspect data leakage or methodological shortcuts. As detailed in the methodology (Chapter 3), the SFT training and holdout evaluation datasets were generated by cross-multiplying 17 base user tools and 62 attacker payloads, yielding 1,054 combinatoric cases. 
+
+While the test split (554 cases) uses unseen combinations of tools and payloads, the model was exposed to all 17 tools and all 62 attacker payloads during the fine-tuning phase (albeit paired with different matching counterparts). This design has significant implications for how we interpret the model's generalization capabilities:
+- *Combinatorial Generalization*: The results prove that the proxy has achieved excellent combinatorial generalization. It successfully learned to decouple the structural syntax of the tool schemas from the semantic content of the natural language description fields. During SFT, the model generalized a "many-to-one" mapping, learning that regardless of what adversarial or benign instructions are embedded within the template slots, they must be discarded and replaced with the clean, hand-crafted gold targets.
+- *Out-of-Distribution (OOD) Generalization*: These results do not verify true OOD generalization. Because the specific textual patterns of every attack payload and the exact definitions of every tool template were present in the training set (in other pairings), we cannot claim that the proxy will maintain a 0.00% ASR when encountering an entirely zero-shot, novel prompt injection technique (e.g., zero-day jailbreaks) or when auditing an entirely new, complex tool definition it has never seen before.
+
+This distinction is crucial for grounding the academic contribution of the thesis. The proxy is highly robust at enforcing known security boundaries across familiar toolkits, but its zero-shot generalization to novel, out-of-distribution attack signatures remains unproven and represents a key vulnerability in dynamic operational environments.
+
+== Alignment Efficacy and Practical SME Deployment
+
+Beyond raw security metrics, the evaluation results validate the practical feasibility of deploying lightweight, fine-tuned SLMs as secure local middleware for resource-constrained small and medium-sized enterprises (SMEs). This aligns with the wider DSR objectives of solving the "Operational Paradox" identified by @sanchez2025artificial and @ode2026ai.
+
+Downstream AI agents operating under the Model Context Protocol (MCP) or utilizing Agent Skills are highly sensitive to the "Context Tax" @fraser2025cutting. Monolithic frontier models (such as GPT-4 or Gemini Pro) possess strong native reasoning capabilities to filter prompt injections, but routing every tool discovery call to third-party cloud APIs incurs prohibitive latency and cost overheads for SMEs, while exposing sensitive corporate data to external networks.
+
+The fine-tuned Qwen2.5-3B-Instruct proxy addresses these constraints simultaneously:
+1. *Resource Efficiency*: Quantized to 4-bit precision, the proxy operates locally on standard consumer hardware, requiring only 4-6GB of RAM.
+2. *Context Compression*: By distilling verbose, unstructured user instructions to a tight 1.1x–1.5x compression range, the proxy actively reduces the downstream token tax without sacrificing structural features, directly supporting the progressive disclosure model described by @whittaker2026mcp.
+3. *Usability Preservation*: The perfect format integrity ensures that downstream agents do not experience execution crashes due to syntax mismatches, a critical requirement highlighted by @jhandi2026small.
+
+By proving that a 3-billion parameter model can be aligned via PEFT/LoRA to act as a highly specialized security filter and format encoder, this study supports the findings of @zupan2025developing and @jhandi2026small: targeted fine-tuning allows lightweight SLMs to match or exceed the performance of massive general-purpose models on narrow, structurally defined tasks.
+
+== Limitations of the Study
+
+Despite the strong performance of the developed artifact, several limitations must be acknowledged:
+1. *Synthetic Nature of the Dataset*: Due to the novelty of the Agent Skills specification, no public repository of real-world poisoned skills exists. The evaluation dataset was programmatically synthesized using combinatoric matrices adapted from @zhan2024injecagent. Although mitigation strategies (varied injection positions and phrasing) were applied to prevent shortcut learning, the synthetic distribution may not capture the full complexity and noise of real-world, hand-written SME instructions.
+2. *Threat Model Constraints*: The defense is constrained to the attack taxonomies documented in the MSB @zhang2025msb and INJECAGENT @zhan2024injecagent benchmarks. The model is vulnerable to novel, zero-day jailbreak configurations or sophisticated multi-turn interactive injections (such as those evaluated in AgentDojo @debenedetti2024agentdojo) that bypass static, single-pass filters.
+3. *Combinatoric Data Splitting*: As discussed in Section 5.2, the data partitioning method limits the evaluation to combinatorial generalization rather than true zero-shot out-of-distribution testing.
+4. *Lack of Longitudinal Deployment*: The DSR evaluation is limited to quantitative offline testing. The proxy has not been integrated into a live, multi-agent operational environment to measure long-term system stability, user latency, and performance drift.
 
 // ════════════════════════════════════════════════════════════════════════════
 // CHAPTER 6 — CONCLUSIONS  (§3.4.8)
@@ -551,37 +616,36 @@ complexity of real-world deployments.
 // ════════════════════════════════════════════════════════════════════════════
 = Conclusions
 
-This chapter summarises the project, addresses each objective, and
-proposes directions for future work.
+This chapter summarizes the key achievements of this project, addresses each research objective established in Chapter 1, and proposes directions for future research.
 
-The aim of this dissertation was to investigate whether a logic-based
-analytical framework could improve accuracy in information systems
-analysis. Three objectives were established (Chapter 1); all three have
-been fully addressed.
+== Summary of the Project
 
-Objective 1 — to critically review existing frameworks — was addressed
-in Chapter 2, which identified formal logic as a well-established but
-underexplored foundation for analytical tools.
+This dissertation has presented the design, implementation, and empirical evaluation of a secure local Small Language Model (SLM) proxy to defend resource-constrained Small and Medium-sized Enterprises (SMEs) against Indirect Prompt Injection (IPI) attacks in tool-integrated agentic workflows. 
 
-Objective 2 — to develop a novel framework — was addressed in Chapter 3,
-where the design and operationalisation of the proposed approach were
-described in detail.
+Utilizing the Design Science Research (DSR) paradigm, the developed artifact leverages a quantized 4-bit `qwen2.5-3b-instruct` model, aligned via Supervised Fine-Tuning (SFT) and Low-Rank Adaptation (LoRA) within the Unsloth framework. This configuration allows the model to run entirely locally on standard consumer-grade hardware with 4–6GB of RAM. The proxy operates as an automated validation and compression middleware for Agent Skills (`SKILL.md` files) before they are loaded into downstream AI agent contexts. 
 
-Objective 3 — to evaluate the framework empirically — was addressed in
-Chapters 4 and 5. The proposed method achieved 84.7% mean accuracy
-compared with 72.4% for the baseline.
+The evaluation results demonstrate that the fine-tuned proxy successfully blocks adversarial payloads (0.00% ASR-valid) and maintains a flawless formatting pass rate (100.00% format integrity) with a 0.00% False-Alarm Rate on benign inputs, while compressing verbose instructions to a predictable 1.14x–1.53x compression range. In comparison, the vanilla baseline model suffers from severe usability degradation, failing formatting checks and aggressively truncating operational parameters to achieve safety (the "Security by Destruction" effect).
 
-The hypothesis — that the logic-based framework would yield measurably
-higher accuracy — is supported by the experimental evidence. The null
-hypothesis is therefore rejected at the conventional significance level.
+== Addressing the Research Objectives
 
-The principal limitation of the study is the sample size and setting;
-future research should replicate the findings with larger, more diverse
-participant groups in operational environments.
+All three research objectives established in Chapter 1 have been fully addressed:
 
-It is concluded that formal logic offers a viable and demonstrably
-effective foundation for analytical frameworks in information systems,
-and that the approach merits further development and deployment.
+1. *Objective 1: Synthesize a targeted evaluation corpus*: Fully addressed in Chapter 3. We constructed a programmatic combinatoric matrix containing 3,276 virtual test instances (comprising 1,054 standard and 414 domain-aligned attack scenarios evaluated across Base and Enhanced settings, alongside 170 benign hard negative controls). This synthesized dataset mapped physical payloads from the INJECAGENT taxonomy @zhan2024injecagent to structural delivery vectors identified in the MCP Security Bench (MSB) @zhang2025msb.
+2. *Objective 2: Design and implement the SFT pipeline*: Fully addressed in Chapter 3. A programmatic pipeline was built to curate training sets and fine-tune the 3-billion parameter Qwen model. Parameter-Efficient Fine-Tuning (PEFT) via LoRA allowed the model weights to converge efficiently for structural formatting and classification, enabling local quantization.
+3. *Objective 3: Evaluate the proxy's capability*: Fully addressed in Chapter 4 and discussed in Chapter 5. The proxy was subjected to a rigorous offline evaluation split (554 standard, 214 domain-aligned, and 90 benign hard negative cases) to measure Security Efficacy (ASR-valid), Format Integrity, and the Token Compression Ratio, proving the proxy's capacity to maintain safety without destroying tool usability.
+
+== Comment on the Aim and Hypothesis
+
+The primary aim of this research—to design, build, and evaluate a fine-tuned SLM proxy that secures SME workflows by auditing and compressing `SKILL.md` files—has been successfully achieved. 
+
+The underlying hypothesis—that a specialized, fine-tuned Small Language Model can serve as a secure and format-compliant local proxy under strict resource constraints—is supported by the experimental evidence. While vanilla models fail to parse and reconstruct structured tool schemas, the fine-tuned proxy demonstrated that targeted alignment allows lightweight, 3-billion parameter models to reliably enforce syntax and safety boundaries, rendering local, private agent security both technically and financially viable for SMEs.
+
+== Future Work
+
+To build upon the contributions of this dissertation, several areas for future research are proposed:
+1. *Out-of-Distribution (OOD) Generalization Benchmarks*: Future evaluations should test the proxy's resilience against zero-shot, novel prompt injection signatures and completely unseen, complex tool schemas to verify its true out-of-distribution robustness.
+2. *Longitudinal Live Deployments*: The proxy should be deployed in a live, multi-agent operational SME environment to assess real-world performance metrics such as end-to-end user latency, system stability, and model drift over time.
+3. *Dynamic Interactive Security*: While this study focused on a static, single-pass filter during the progressive disclosure phase, future research should integrate the proxy into dynamic, stateful tool-execution sandboxes (similar to the AgentDojo @debenedetti2024agentdojo environment) to secure multi-turn agent interactions.
 
 // ════════════════════════════════════════════════════════════════════════════
 // BIBLIOGRAPHY  (§3.4.11)
