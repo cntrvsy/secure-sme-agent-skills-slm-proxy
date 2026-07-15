@@ -139,6 +139,15 @@
   show figure.where(kind: image): set figure(supplement: "Figure")
   show figure.where(kind: table): set figure(supplement: "Table")
   show figure: it => { v(1em); it; v(1em) }
+  
+  // Clean, professional academic table styling (Booktabs style)
+  set table(
+    stroke: (col, row) => if row == 0 { (top: 1.5pt + black, bottom: 1pt + black) } else { (bottom: 0.5pt + luma(220)) },
+    fill: (col, row) => if row == 0 { luma(245) } else { none },
+    inset: (x: 8pt, y: 7pt),
+  )
+  show table: set text(size: 10.5pt)
+
 
   // Table captions use independent numbering from figures (§3.5.7)
   // Both use the same "C.N" scheme but separate counters — Typst handles
