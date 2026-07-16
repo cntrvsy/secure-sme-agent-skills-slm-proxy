@@ -13,6 +13,7 @@
 		"@sveltejs/kit": "^2.51.0",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@types/reveal.js": "^5.2.2",
+		"daisyui": "^5.6.18",
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.4.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",

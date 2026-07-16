@@ -8,8 +8,8 @@
 @import '@animotion/core/theme' layer(presentation);
 
 /* tailwind */
-@import 'tailwindcss/theme';
-@import 'tailwindcss/utilities';
+@import 'tailwindcss';
+@plugin 'daisyui';
 
 /* custom styles */
 @import './overrides.css' layer(overrides);

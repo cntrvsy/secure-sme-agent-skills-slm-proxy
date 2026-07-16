@@ -1,1 +1,60 @@
 /* your overrides */
+
+body, 
+.reveal, 
+.reveal-viewport, 
+.reveal .slides, 
+.reveal section {
+	background-color: var(--color-base-100) !important;
+	color: var(--color-base-content) !important;
+}
+
+.reveal h1, 
+.reveal h2, 
+.reveal h3, 
+.reveal h4, 
+.reveal h5, 
+.reveal h6 {
+	color: var(--color-base-content) !important;
+}
+
+/* Ensure active text and general paragraph styling inside slides */
+.reveal p {
+	color: var(--color-base-content) !important;
+}
+
+/* Make code blocks scale down and fit without line wrapping */
+.reveal pre {
+	width: 100% !important;
+	box-shadow: none !important;
+	background: transparent !important;
+	margin: 0px !important;
+}
+
+.reveal pre code {
+	font-size: 0.7em !important;
+	line-height: 1.4 !important;
+	max-height: 100% !important;
+	white-space: pre-wrap !important;
+	word-break: break-word !important;
+}
+
+/* White/light mockup windows styling */
+.reveal .mockup-window.bg-white {
+	background-color: #ffffff !important;
+	border-color: #e2e8f0 !important;
+	color: #0f172a !important;
+}
+
+/* Force all code text inside white mockup windows to be solid black */
+.reveal .mockup-window.bg-white pre,
+.reveal .mockup-window.bg-white pre * {
+	color: #000000 !important;
+}
+
+/* Mockup window header text */
+.reveal .mockup-window.bg-white .text-base-content\/40 {
+	color: rgba(15, 23, 42, 0.6) !important;
+}
+
+

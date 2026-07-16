@@ -1,54 +1,71 @@
 <script lang="ts">
 	import { Transition } from '@animotion/core'
-
-	let items = $state([1, 2, 3, 4])
-	let layout = $state('flex gap-4')
 </script>
 
-<Transition>
-	<p class="text-6xl font-bold drop-shadow-sm">🪄 Layout Animations</p>
-</Transition>
+<div class="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-7xl mx-auto px-4 text-center">
+	<Transition visible>
+		<h2 class="text-5xl font-extrabold tracking-tight mb-3 text-primary">
+			The Attack Pipeline
+		</h2>
+		<p class="text-base-content/80 font-light mb-12 max-w-2xl mx-auto text-lg">
+			How natural language instructions bypass security boundaries to compromise tool execution.
+		</p>
+	</Transition>
 
-<Transition
-	do={() => {
-		items = [1, 2, 3, 4]
-		layout = 'flex gap-4'
-	}}
-	class="mt-16"
->
-	<div class={layout}>
-		{#each items as item, i (item)}
-			<Transition
-				class="grid h-[180px] w-[180px] place-content-center rounded-2xl border-t-2 border-white bg-gray-200 text-6xl font-semibold text-black shadow-2xl"
-				entry="rotate"
-				duration={2}
-				delay={i * 0.1}
-				visible
-			>
-				{item}
-			</Transition>
-		{/each}
+	<!-- Horizontal Steps -->
+	<div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left mt-2">
+		<!-- Step 1 -->
+		<Transition delay={0.2} visible>
+			<div class="card bg-base-200 border border-base-300 shadow-xl p-8 relative overflow-hidden h-full flex flex-col justify-between">
+				<div>
+					<div class="text-xs uppercase tracking-widest text-primary font-bold mb-4">Stage 1</div>
+					<h3 class="font-bold text-xl text-base-content mb-3">
+						Payload Delivery
+					</h3>
+					<p class="text-sm text-base-content/75 font-light leading-relaxed">
+						The attacker uploads a poisoned payload disguised as benign text (e.g. inside product reviews or static skill files). Since the text looks like normal descriptive data, standard input filters let it pass.
+					</p>
+				</div>
+				<div class="mt-6 text-xs font-mono text-error">
+					Threat: Data Poisoning
+				</div>
+			</div>
+		</Transition>
+
+		<!-- Step 2 -->
+		<Transition delay={0.4} visible>
+			<div class="card bg-base-200 border border-base-300 shadow-xl p-8 relative overflow-hidden h-full flex flex-col justify-between">
+				<div>
+					<div class="text-xs uppercase tracking-widest text-secondary font-bold mb-4">Stage 2</div>
+					<h3 class="font-bold text-xl text-base-content mb-3">
+						Context Loading
+					</h3>
+					<p class="text-sm text-base-content/75 font-light leading-relaxed">
+						The downstream agent executes a command that requires reading the skill description. The raw text payload is dynamically loaded directly into the active prompt context.
+					</p>
+				</div>
+				<div class="mt-6 text-xs font-mono text-warning">
+					Threat: Context Ingestion
+				</div>
+			</div>
+		</Transition>
+
+		<!-- Step 3 -->
+		<Transition delay={0.6} visible>
+			<div class="card bg-base-200 border border-base-300 shadow-xl p-8 relative overflow-hidden h-full flex flex-col justify-between">
+				<div>
+					<div class="text-xs uppercase tracking-widest text-accent font-bold mb-4">Stage 3</div>
+					<h3 class="font-bold text-xl text-base-content mb-3">
+						Exploit Execution
+					</h3>
+					<p class="text-sm text-base-content/75 font-light leading-relaxed">
+						The language model fails to separate commands from data. It interprets the attacker instructions as system directives and executes malicious APIs to exfiltrate private credentials.
+					</p>
+				</div>
+				<div class="mt-6 text-xs font-mono text-success">
+					Result: Confused Deputy
+				</div>
+			</div>
+		</Transition>
 	</div>
-</Transition>
-
-<Transition
-	transitions={[
-		() => {
-			layout = 'grid grid-cols-2 grid-rows-2 gap-4'
-			items = [4, 3, 2, 1]
-		},
-		() => {
-			layout = 'grid grid-cols-2 grid-rows-2 gap-4'
-			items = [2, 1, 4, 3]
-		},
-		() => {
-			layout = 'grid grid-cols-2 grid-rows-2 gap-4'
-			items = [4, 3, 2, 1]
-		},
-		() => {
-			layout = 'grid grid-cols-2 grid-rows-2 gap-4'
-			items = [1, 2, 3, 4]
-		},
-		() => (layout = 'flex gap-4'),
-	]}
-/>
+</div>
