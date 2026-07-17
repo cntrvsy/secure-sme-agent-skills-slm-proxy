@@ -461,7 +461,7 @@ To operationalize the evaluation of the fine-tuned SLM proxy, a programmatic tes
 4. *Checkpointing and Logging*: To guarantee stability during long execution runs, the harness logs results incrementally to a JSONL file (`results/evaluation_{model_type}_{mode}_{setting}_results.jsonl`). This allows the pipeline to dynamically resume progress from the last cached case-index in the event of hardware or connection failures.
 
 #figure(
-  image("SLM Proxy Assessment Flow.png", width: 55%),
+  image("SLM Proxy Assessment Flow.png", width: 53%),
   caption: [Systematic Execution Flow of the SLM Proxy Assessment Harness],
 ) <fig-assessment-flow>
 
@@ -991,14 +991,20 @@ Retrieves the full text body, sender information, and attachment details for a g
 To facilitate the verification, audit, and extension of the experimental findings in this research, all related software artifacts, models, and datasets are publicly hosted and version-controlled. The following resources provide open access to the complete technical implementation:
 
 - *Research Codebase (GitHub)*:
-  #link("https://github.com/cntrvsy/secure-sme-agent-skills-slm-proxy")[https://github.com/cntrvsy/secure-sme-agent-skills-slm-proxy]
+  #link(
+    "https://github.com/cntrvsy/secure-sme-agent-skills-slm-proxy",
+  )[https://github.com/cntrvsy/secure-sme-agent-skills-slm-proxy]
   Contains the complete codebase including the local defensive proxy evaluation suite, interactive presentation slide deck, dataset curation tools, and the Typst source documents.
 
 - *Fine-Tuned Defensive Proxy Model (Hugging Face)*:
-  #link("https://huggingface.co/cntrvsy/qwen2.5-3B-Instruct_skills_security_proxy")[https://huggingface.co/cntrvsy/qwen2.5-3B-Instruct_skills_security_proxy]
+  #link(
+    "https://huggingface.co/cntrvsy/qwen2.5-3B-Instruct_skills_security_proxy",
+  )[https://huggingface.co/cntrvsy/qwen2.5-3B-Instruct_skills_security_proxy]
   Provides direct access to the LoRA weights, merged 16-bit float model, and quantized GGUF weights of the fine-tuned security-hardened `Qwen2.5-3B-Instruct` model.
 
 - *Poisoned SME Skills Dataset (Hugging Face)*:
-  #link("https://huggingface.co/datasets/cntrvsy/synthezised_sme_poisoned_skillsmd")[https://huggingface.co/datasets/cntrvsy/synthezised_sme_poisoned_skillsmd]
+  #link(
+    "https://huggingface.co/datasets/cntrvsy/synthezised_sme_poisoned_skillsmd",
+  )[https://huggingface.co/datasets/cntrvsy/synthezised_sme_poisoned_skillsmd]
   Hosts the synthesized Supervised Fine-Tuning (SFT) training datasets and unseen holdout evaluation cases used to train and test the defensive proxy model.
 

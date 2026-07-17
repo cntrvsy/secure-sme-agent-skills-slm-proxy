@@ -162,7 +162,7 @@ python3 -m venv .venv
 
 ### Step 2: Curation & Sanitization (Gemini SDK API Call)
 
-Run the unified [refine_dataset.py](file:///mnt/1c5f09d2-4b36-42cf-8541-5cb64e85f9e9/projects/masters/dataset/refine_dataset.py) script to generate your training splits. Ensure `GEMINI_API_KEY` is exported first.
+Run the unified [refine_dataset.py](refine_dataset.py) script to generate your training splits. Ensure `GEMINI_API_KEY` is exported first.
 
 #### `refine_dataset.py` Arguments
 | Argument | Type / Choices | Default | Description |
@@ -229,7 +229,7 @@ To run the training, use the `./run_training.sh` launcher script. It automatical
   ```
 
 #### `Qwen2_5_3B_SKILLmd_Sanitizer_Finetune.py` Arguments
-Any arguments passed to `./run_training.sh` are forwarded directly to [Qwen2_5_3B_SKILLmd_Sanitizer_Finetune.py](file:///mnt/1c5f09d2-4b36-42cf-8541-5cb64e85f9e9/projects/masters/dataset/Qwen2_5_3B_SKILLmd_Sanitizer_Finetune.py):
+Any arguments passed to `./run_training.sh` are forwarded directly to [Qwen2_5_3B_SKILLmd_Sanitizer_Finetune.py](Qwen2_5_3B_SKILLmd_Sanitizer_Finetune.py):
 
 | Argument | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
