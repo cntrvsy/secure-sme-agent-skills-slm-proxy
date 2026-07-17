@@ -44,6 +44,84 @@ To evaluate and prevent **over-refusal** or **false-positives** (where the model
 
 ---
 
+## End-to-End Pipeline & Component Connections
+
+The following diagram illustrates how all scripts, datasets, models, and external repositories are interconnected to form the dataset generation, model training, and evaluation lifecycle:
+
+```mermaid
+graph TD
+    %% Dataset Curation
+    subgraph Curation [1. Dataset Curation]
+        IJ[InjecAgent Data /temp_injecagent/] -->|Read inputs| RD(refine_dataset.py)
+        GEM[Gemini 2.5 Flash API] <-->|Synthesize Gold Targets| RD
+        RD -->|Generate SFT Splits| SFT[Local SFT splits sft_train.jsonl / test.jsonl]
+    end
+
+    %% Hugging Face Publishing
+    subgraph HF [2. Hugging Face Hosting]
+        SFT -->|Publish Dataset| HF_DS(HF Dataset: cntrvsy/synthezised_sme_poisoned_skillsmd)
+        HF_MOD(HF Model: cntrvsy/qwen2.5-3B-Instruct_skills_security_proxy)
+    end
+
+    %% Fine-Tuning
+    subgraph Training [3. QLoRA Fine-Tuning]
+        HF_DS -->|Stream SFT samples| FT(Qwen2_5_3B_SKILLmd_Sanitizer_Finetune.py)
+        FT -->|Save PEFT Adapters| LORA[qwen2_5_3b_skillmd_sanitizer_lora]
+        FT -->|Export Quantized Model| GGUF[qwen2_5_3b_skillmd_sanitizer_gguf]
+        LORA & GGUF -->|Publish Model Weights| HF_MOD
+    end
+
+    %% Evaluation
+    subgraph Evaluation [4. Local Evaluation & Verification]
+        GGUF -->|Load into Local Inference Server Ollama/LM Studio| INF(Local SLM Proxy Service)
+        EP(evaluate_proxy.py) -->|Query with input skills| INF
+        INF -->|Return sanitized skills| EP
+        SFT -->|Read test ground-truth| EP
+        EP -->|Compute metrics ASR-valid, Format, Tokens| RES[results/ & results_analysis.ipynb]
+    end
+
+    %% Core Application
+    subgraph Application [5. Core SME Application]
+        APP[Svelte Presentation & SME Skills App] -->|Use proxy model for secure execution| INF
+    end
+    
+    style Curation fill:#d0f0c0,stroke:#333,stroke-width:2px
+    style HF fill:#ffe4b5,stroke:#333,stroke-width:2px
+    style Training fill:#f0f8ff,stroke:#333,stroke-width:2px
+    style Evaluation fill:#e6e6fa,stroke:#333,stroke-width:2px
+    style Application fill:#ffe4e1,stroke:#333,stroke-width:2px
+```
+
+### Detailed Component Relationships
+
+1. **`refine_dataset.py` (Dataset Curation)**:
+   - **Input**: Reads the base data configurations from `temp_injecagent/data/`.
+   - **External API Connection**: Dispatches prompts to the Gemini 2.5 Flash API to synthesize the "gold distilled" target representations (purged of all prompt injections).
+   - **Output**: Writes deterministic train/holdout splits locally (`sft_dataset_standard_train.jsonl`, `sft_dataset_domain_aligned_train.jsonl`, etc.).
+   
+2. **Hugging Face Dataset (`cntrvsy/synthezised_sme_poisoned_skillsmd`)**:
+   - The locally generated splits are pushed to Hugging Face to make them accessible and version-controlled.
+
+3. **`Qwen2_5_3B_SKILLmd_Sanitizer_Finetune.py` (Model Training)**:
+   - **Input**: Automatically streams training instances from the Hugging Face dataset.
+   - **Processing**: Utilizes the Unsloth framework to fine-tune `Qwen2.5-3B-Instruct` via parameter-efficient QLoRA.
+   - **Output**: Saves the model checkpoints locally under `outputs/`, creates local folders for LoRA weights (`qwen2_5_3b_skillmd_sanitizer_lora`), merges the weights, and exports GGUF binaries (`qwen2_5_3b_skillmd_sanitizer_gguf`). These artifacts are subsequently published to Hugging Face.
+
+4. **`evaluate_proxy.py` (Evaluation Harness)**:
+   - **Input**: Reads unseen evaluation cases from `test.jsonl` and looks up attacker information in `temp_injecagent/data/`.
+   - **Execution**: Connects to a local serving backend (Ollama/LM Studio) running the compiled/quantized model.
+   - **Output**: Queries the local proxy instance, verifies if outputs contain malicious leaks or formatting issues, and saves the metrics to the `results/` folder.
+
+5. **`results_analysis.ipynb` (Visualization)**:
+   - Analyzes evaluation outputs in the `results/` directory to generate the empirical figures (e.g. `security_efficacy_matrix.png`) embedded in the main dissertation.
+
+6. **Parent Codebase & Frontend Application (`github.com/cntrvsy/secure-sme-agent-skills-slm-proxy`)**:
+   - Houses the Svelte/Animotion presentation slides and the orchestration mechanisms. In production, any SME agent workflow queries the local model serving endpoint before executing dynamic tools.
+
+
+---
+
+
 ## Dataset Mathematics & Splitting
 
 ### 1. Unique vs. Duplicate Cases
