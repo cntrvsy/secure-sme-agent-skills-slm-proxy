@@ -10,12 +10,28 @@
 // Lower-case Roman numeral renderer for front-matter page numbers
 #let _roman(n) = {
   let vals = (
-    (1000,"m"),(900,"cm"),(500,"d"),(400,"cd"),
-    (100,"c"),(90,"xc"),(50,"l"),(40,"xl"),
-    (10,"x"),(9,"ix"),(5,"v"),(4,"iv"),(1,"i"),
+    (1000, "m"),
+    (900, "cm"),
+    (500, "d"),
+    (400, "cd"),
+    (100, "c"),
+    (90, "xc"),
+    (50, "l"),
+    (40, "xl"),
+    (10, "x"),
+    (9, "ix"),
+    (5, "v"),
+    (4, "iv"),
+    (1, "i"),
   )
-  let r = ""; let rem = n
-  for (v, s) in vals { while rem >= v { r = r + s; rem = rem - v } }
+  let r = ""
+  let rem = n
+  for (v, s) in vals {
+    while rem >= v {
+      r = r + s
+      rem = rem - v
+    }
+  }
   r
 }
 
@@ -48,18 +64,17 @@
 //   - Avoid colloquialisms
 //
 #let dissertation(
-  title:            "Dissertation Title",
-  author:           "A. Name",
-  degree:           "Masters Degree in Information Systems",
-  school:           "Cardiff School of Technologies",
-  university:       "Cardiff Metropolitan University, Cardiff",
-  month-year:       "Month Year",
-  supervisor:       "Supervisor Name",
-  abstract:         [],
+  title: "Dissertation Title",
+  author: "A. Name",
+  degree: "Masters Degree in Information Systems",
+  school: "Cardiff School of Technologies",
+  university: "Cardiff Metropolitan University, Cardiff",
+  month-year: "Month Year",
+  supervisor: "Supervisor Name",
+  abstract: [],
   acknowledgements: none,
   body,
 ) = {
-
   // ── Document metadata ─────────────────────────────────────────────────────
   set document(title: title, author: author)
 
@@ -74,15 +89,11 @@
     header: none,
     footer: context {
       // Position footer outside the text boundary (§3.5.3)
-      pad(bottom: -8mm,
-        align(center, text(size: 10pt,
-          if _fm-state.get() {
-            _roman(counter(page).get().first())
-          } else {
-            str(counter(page).get().first())
-          }
-        ))
-      )
+      pad(bottom: -8mm, align(center, text(size: 10pt, if _fm-state.get() {
+        _roman(counter(page).get().first())
+      } else {
+        str(counter(page).get().first())
+      })))
     },
   )
 
@@ -108,7 +119,7 @@
     pagebreak(weak: true)
     v(1.5em)
     block(text(size: 12pt, weight: "bold", upper(it.body)))
-    v(10 * 1.15em)   // ten blank lines
+    v(10 * 1.15em) // ten blank lines
   }
 
   // Level 2 — Section
@@ -137,17 +148,22 @@
     supplement: "Figure",
   )
   show figure.where(kind: image): set figure(supplement: "Figure")
-  show figure.where(kind: table): set figure(supplement: "Table")
-  show figure: it => { v(1em); it; v(1em) }
-  
+  show figure.where(kind: table): set figure(supplement: "Table", numbering: "1")
+  show figure: it => {
+    v(1em)
+    it
+    v(1em)
+  }
+
   // Clean, professional academic table styling (Booktabs style)
   set table(
-    stroke: (col, row) => if row == 0 { (top: 1.5pt + black, bottom: 1pt + black) } else { (bottom: 0.5pt + luma(220)) },
+    stroke: (col, row) => if row == 0 { (top: 1.5pt + black, bottom: 1pt + black) } else {
+      (bottom: 0.5pt + luma(220))
+    },
     fill: (col, row) => if row == 0 { luma(245) } else { none },
     inset: (x: 8pt, y: 7pt),
   )
   show table: set text(size: 10.5pt)
-
 
   // Table captions use independent numbering from figures (§3.5.7)
   // Both use the same "C.N" scheme but separate counters — Typst handles
@@ -162,7 +178,7 @@
   // Single-spaced; one blank line between each entry.
   // When using #bibliography("refs.bib") Typst handles the spacing;
   // the set rule below tightens entry leading to match single-spacing.
-  set bibliography(style: "chicago-author-date", title: none)
+  set bibliography(style: "harvard-cite-them-right", title: none)
 
   // ══════════════════════════════════════════════════════════════════════════
   // FRONT MATTER — Roman numeral page numbering, starting at i
@@ -222,7 +238,9 @@
     currently being submitted for any other degree.
 
     #v(5em)
-    #grid(columns: (1fr, 1fr), gutter: 3em,
+    #grid(
+      columns: (1fr, 1fr),
+      gutter: 3em,
       align(left)[
         *Candidate* \
         #v(1.5em)
@@ -267,7 +285,7 @@
   // ── Table of Contents (§3.4.4) ───────────────────────────────────────────
   // Chapter and section headings with page numbers; depth 3.
   page[
-    #align(center, text(weight: "bold", size: 12pt, upper[Contents]))
+    #align(center, text(weight: "bold", size: 12pt, upper[Table of Contents]))
     #v(2em)
     #outline(indent: auto, depth: 3, title: none)
   ]
